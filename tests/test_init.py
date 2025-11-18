@@ -2,7 +2,7 @@
 
 import pytest
 
-from homeassistant.components.ultrastat.const import (
+from custom_components.ultrastat.const import (
     DOMAIN,
     CONF_ROOM_TEMP_ENTITIES,
     CONF_BOILER,
