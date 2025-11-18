@@ -1,0 +1,11 @@
+{
+  "domain": "ultrastat",
+  "name": "UltraStat",
+  "codeowners": [
+    "@ngist"
+  ],
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/ultrastat",
+  "integration_type": "helper",
+  "iot_class": "calculated"
+}
