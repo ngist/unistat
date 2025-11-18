@@ -1,6 +1,6 @@
 name: Python package
 
-on:
+on: # yamllint disable-line rule:truthy
   push:
   schedule:
     - cron: "30 16 * * WED"
@@ -11,7 +11,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ["3.13"]
+        python-version: ["3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
