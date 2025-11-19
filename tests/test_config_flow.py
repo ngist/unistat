@@ -3,20 +3,88 @@
 from unittest.mock import AsyncMock
 
 from custom_components.ultrastat.const import (
-    CONF_ADJACENCY,
+    CONF_AREA,
+    CONF_BOILER_BTUH,
+    CONF_BOILER_INTLET_TEMP_ENTITY,
+    CONF_BOILER_METER,
+    CONF_BOILER_OUTLET_TEMP_ENTITY,
+    CONF_BOILER_UNIT_COST,
     CONF_BOILER,
-    CONF_ROOM_TEMP_ENTITIES,
+    CONF_CONTROL_MODE,
+    CONF_HEATING_CALL_ENTITY,
+    CONF_NUM_ROOMS,
+    CONF_OUTDOOR_SENSORS,
+    CONF_TEMP_ENTITIES,
     DOMAIN,
+    ControlMode,
 )
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, CONF_TEMPERATURE_UNIT, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 pytestmark = pytest.mark.usefixtures("mock_setup_entry")
+
+MAIN_SETTINGS_MINIMAL = {
+    CONF_NAME: "My ultrastat",
+    CONF_NUM_ROOMS: 1,
+    CONF_BOILER: False,
+    # CONF_ADJACENCY: False, #TODO re-enable one adjacency is added back
+    CONF_CONTROL_MODE: ControlMode.COMFORT,
+    CONF_TEMPERATURE_UNIT: UnitOfTemperature.FAHRENHEIT,
+    CONF_OUTDOOR_SENSORS: {},
+}
+
+MAIN_SETTINGS_WITH_BOILER = {
+    CONF_NAME: "My ultrastat",
+    CONF_NUM_ROOMS: 1,
+    CONF_BOILER: True,
+    # CONF_ADJACENCY: False, #TODO re-enable one adjacency is added back
+    CONF_CONTROL_MODE: ControlMode.COMFORT,
+    CONF_TEMPERATURE_UNIT: UnitOfTemperature.FAHRENHEIT,
+    CONF_OUTDOOR_SENSORS: {},
+}
+
+MAIN_SETTINGS_WITH_BOILER_MULTIPLE_ROOMS = {
+    CONF_NAME: "My ultrastat",
+    CONF_NUM_ROOMS: 3,
+    CONF_BOILER: True,
+    # CONF_ADJACENCY: False, #TODO re-enable one adjacency is added back
+    CONF_CONTROL_MODE: ControlMode.COMFORT,
+    CONF_TEMPERATURE_UNIT: UnitOfTemperature.FAHRENHEIT,
+    CONF_OUTDOOR_SENSORS: {},
+}
+
+MAIN_SETTINGS_MULTIPLE_ROOMS = {
+    CONF_NAME: "My ultrastat",
+    CONF_NUM_ROOMS: 3,
+    CONF_BOILER: True,
+    # CONF_ADJACENCY: False, #TODO re-enable one adjacency is added back
+    CONF_CONTROL_MODE: ControlMode.COMFORT,
+    CONF_TEMPERATURE_UNIT: UnitOfTemperature.FAHRENHEIT,
+    CONF_OUTDOOR_SENSORS: {},
+}
+
+BOILER_SETTINGS_MINIMAL = {
+    CONF_HEATING_CALL_ENTITY: ["switch.zone1"],
+    "temp_sensors": {
+        CONF_BOILER_INTLET_TEMP_ENTITY: "sensor.inlet_temp",
+        CONF_BOILER_OUTLET_TEMP_ENTITY: "sensor.outlet_temp",
+    },
+    "energy_settings": {
+        CONF_BOILER_BTUH: 140000,
+        CONF_BOILER_METER: "utility_meter.boiler",
+        CONF_BOILER_UNIT_COST: 0.5,
+    },
+}
+
+ROOM_1_SETTINGS = {
+    CONF_AREA: "area.living_room",
+    CONF_TEMP_ENTITIES: ["sensor.room1_temp"],
+}
 
 
 @pytest.mark.parametrize("platform", ["climate"])
@@ -24,7 +92,6 @@ async def test_minimal_config_flow(
     hass: HomeAssistant, mock_setup_entry: AsyncMock, platform
 ) -> None:
     """Test the config flow."""
-    input_sensor_entity_id = "sensor.input"
 
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
@@ -34,12 +101,7 @@ async def test_minimal_config_flow(
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        {
-            CONF_NAME: "My ultrastat",
-            CONF_ROOM_TEMP_ENTITIES: [input_sensor_entity_id],
-            CONF_BOILER: False,
-            CONF_ADJACENCY: False,
-        },
+        MAIN_SETTINGS_MINIMAL,
     )
     await hass.async_block_till_done()
 
@@ -47,30 +109,21 @@ async def test_minimal_config_flow(
     assert result["errors"] is None
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        {},
+        ROOM_1_SETTINGS,
     )
     await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    # assert result["title"] == "My ultrastat"
-    assert result["data"] == {
-        CONF_BOILER: False,
-        CONF_NAME: "My ultrastat",
-        "room_conf": [{}],
-        CONF_ROOM_TEMP_ENTITIES: ["sensor.input"],
-        CONF_ADJACENCY: False,
-    }
+    assert result["title"] == "My ultrastat"
+    expected = MAIN_SETTINGS_MINIMAL.copy()
+    expected["room_conf"] = [ROOM_1_SETTINGS]
+    expected["use_adjacency"] = False
+    assert result["data"] == expected
     assert result["options"] == {}
     assert len(mock_setup_entry.mock_calls) == 1
 
     config_entry = hass.config_entries.async_entries(DOMAIN)[0]
-    assert config_entry.data == {
-        CONF_BOILER: False,
-        CONF_NAME: "My ultrastat",
-        "room_conf": [{}],
-        CONF_ROOM_TEMP_ENTITIES: ["sensor.input"],
-        CONF_ADJACENCY: False,
-    }
+    assert config_entry.data == expected
     assert config_entry.options == {}
     assert config_entry.title == "My ultrastat"
 

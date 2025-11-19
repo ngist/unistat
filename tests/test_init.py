@@ -3,7 +3,7 @@
 from custom_components.ultrastat.const import (
     CONF_ADJACENCY,
     CONF_BOILER,
-    CONF_ROOM_TEMP_ENTITIES,
+    CONF_TEMP_ENTITIES,
     DOMAIN,
 )
 import pytest
@@ -27,7 +27,7 @@ async def test_setup_and_remove_config_entry(
     # Setup the config entry
     config_entry = MockConfigEntry(
         data={
-            CONF_ROOM_TEMP_ENTITIES: [input_sensor_entity_id],
+            CONF_TEMP_ENTITIES: [input_sensor_entity_id],
             "name": "My ultrastat",
             "room_conf": [{}],
             CONF_BOILER: False,

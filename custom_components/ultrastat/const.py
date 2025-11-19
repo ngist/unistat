@@ -17,6 +17,7 @@ CONF_BOILER = "has_boiler"
 CONF_WIND_SPEED_ENTITY = "wind_speed_entity"
 CONF_WIND_DIRECTION_ENTITY = "wind_direction_entity"
 CONF_SOLAR_FLUX_ENTITY = "solar_flux_entity"
+CONF_OUTDOOR_SENSORS = "outdoor_sensors"
 
 # Room Specific Settings
 CONF_AREA = "area"

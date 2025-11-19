@@ -22,27 +22,28 @@ from homeassistant.helpers import selector
 from homeassistant.data_entry_flow import section
 
 from .const import (
-    DOMAIN,
+    CONF_ADJACENCY,
     CONF_AREA,
-    CONF_NUM_ROOMS,
-    CONF_HEATING_CALL_ENTITY,
+    CONF_BOILER_BTUH,
+    CONF_BOILER_INTLET_TEMP_ENTITY,
+    CONF_BOILER_METER,
+    CONF_BOILER_OUTLET_TEMP_ENTITY,
+    CONF_BOILER_UNIT_COST,
+    CONF_BOILER,
+    CONF_CLIMATE_ENTITY,
+    CONF_CONTROL_MODE,
     CONF_COOLING_CALL_ENTITY,
     CONF_DEHUMIDIFY_CALL_ENTITY,
+    CONF_HEATING_CALL_ENTITY,
     CONF_HUMIDIFY_CALL_ENTITY,
-    CONF_CLIMATE_ENTITY,
-    CONF_TEMP_ENTITIES,
     CONF_HUMIDITY_ENTITY,
-    CONF_BOILER,
-    CONF_BOILER_BTUH,
-    CONF_BOILER_METER,
-    CONF_BOILER_UNIT_COST,
-    CONF_BOILER_INTLET_TEMP_ENTITY,
-    CONF_BOILER_OUTLET_TEMP_ENTITY,
-    CONF_WIND_SPEED_ENTITY,
+    CONF_NUM_ROOMS,
+    CONF_OUTDOOR_SENSORS,
     CONF_SOLAR_FLUX_ENTITY,
+    CONF_TEMP_ENTITIES,
     CONF_WIND_DIRECTION_ENTITY,
-    CONF_ADJACENCY,
-    CONF_CONTROL_MODE,
+    CONF_WIND_SPEED_ENTITY,
+    DOMAIN,
     ControlMode,
 )
 
@@ -70,7 +71,7 @@ MAIN_SCHEMA = vol.Schema(
         ),
         vol.Required(CONF_BOILER, default=False): bool,
         # vol.Required(CONF_ADJACENCY, default=False): bool, #TODO add this feature later
-        vol.Required("outdoor_sensors"): section(
+        vol.Required(CONF_OUTDOOR_SENSORS): section(
             vol.Schema(
                 {
                     vol.Optional(CONF_TEMP_ENTITIES): selector.EntitySelector(
@@ -187,7 +188,7 @@ ROOM_SCHEMA = vol.Schema(
                 device_class=SensorDeviceClass.HUMIDITY,
             )
         ),
-        vol.Required("heating"): section(
+        vol.Optional("heating"): section(
             vol.Schema(
                 {
                     vol.Optional(CONF_HEATING_CALL_ENTITY): selector.EntitySelector(
@@ -200,7 +201,7 @@ ROOM_SCHEMA = vol.Schema(
             ),
             {"collapsed": True},
         ),
-        vol.Required("cooling"): section(
+        vol.Optional("cooling"): section(
             vol.Schema(
                 {
                     vol.Optional(CONF_COOLING_CALL_ENTITY): selector.EntitySelector(
@@ -213,7 +214,7 @@ ROOM_SCHEMA = vol.Schema(
             ),
             {"collapsed": True},
         ),
-        vol.Required("humidification"): section(
+        vol.Optional("humidification"): section(
             vol.Schema(
                 {
                     vol.Optional(CONF_HUMIDIFY_CALL_ENTITY): selector.EntitySelector(
@@ -226,7 +227,7 @@ ROOM_SCHEMA = vol.Schema(
             ),
             {"collapsed": True},
         ),
-        vol.Required("dehumidification"): section(
+        vol.Optional("dehumidification"): section(
             vol.Schema(
                 {
                     vol.Optional(CONF_DEHUMIDIFY_CALL_ENTITY): selector.EntitySelector(
