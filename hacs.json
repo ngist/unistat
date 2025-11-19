@@ -1,5 +1,6 @@
 {
   "name": "UltraStat",
-  "homeassistant": "25.11.2" 
-  "hacs" : "2.0.5" 
+  "homeassistant": "2025.11.2",
+  "hacs": "2.0.5",
+  "hide_default_branch": true
 }
