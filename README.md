@@ -1,7 +1,7 @@
 # Github Custom for Home Assistant
 
 [![](https://img.shields.io/github/license/ngist/ultrastat?style=for-the-badge)](LICENSE)
-[![](https://img.shields.io/github/actions/workflow/status/ngist/ultrastat/pythonpackage.yml?branch=main&style=for-the-badge)](https://github.com/ngist/ultrastat/actions)
+[![](https://img.shields.io/github/actions/workflow/status/ngist/ultrastat/pythonpackage.yaml?branch=main&style=for-the-badge)](https://github.com/ngist/ultrastat/actions)
 
 ## About
 
@@ -18,4 +18,5 @@ It also allows you to select between several different modes:
 >All of the above is aspirational nothing has been implemented yet.
 
 ## How it works
+
 
