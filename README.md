@@ -17,6 +17,11 @@ It also allows you to select between several different modes:
 2.  Eco: minimizes carbon footprint
 3.  Budget: minimizes energy expenditure (if you only have one type of heating or cooling this is the same as eco mode)
 
+## Prerequisites
+
+1. Setup [Areas](https://www.home-assistant.io/docs/organizing/areas/) for any room in your house you want this integration to control.
+2. Have at least one temperature sensor in each Area your interested in controlling, it doesn't need to be associated with the area in HA(though you probably should associate it), it just needs to be physically located there.
+
 ## Installation
 
 The simplest way to install this integration is with the Home Assistant Community Store (HACS). This is not (yet) part of the default store and will need to be added as a custom repository.
@@ -48,6 +53,37 @@ If you're in the situation where you have any of the following then this integra
 Many of the above situations mean that you can't control one area at a time independently of the others. If one room is hot and another is cold and they are both on the same heating zone what do you do? Control to the average, minimum, maximum? Now what if you have an AC unit in the hot room, you don't want it to turn on in winter while you're heating, even if one of the rooms is warmer than desired. This makes for relatively complex control automations to implement from the UI, now imagine you have several zones, or maybe you have a heatpump in addition to the boiler, when do you use the boiler and when do you use the heatpump? The heatpump will generally be more efficient above a certain outside temperature, but if it's really cold you'll want to use the boiler to save money/energy.
 
 A heatpump only supports one room at a time, but the boiler zone may cover several, from an energy efficiency standpoint it may be better to use the heatpump or the boiler, or both at the same time depending on which rooms need to be heated at any given time.
+
+## Configuration
+
+The configuration flow requires some explanation as many things are possible and supported that may not be obvious.
+
+### Outdoor sensors
+
+These are entirely optional, but populating at least outside temperature is recommended, for most people the other sensors will have minimal impact.
+
+If you have a weather station you can use entities from this to populate outdoor sensors, if you don't have a weather station you can use a weather integration to provide these entities.
+
+### Boiler settings
+
+If you have a hydronic(aka water) boiler then you'll want to specify the heat call switch or switches if you have a multizone system. It's important for the system to know which controls are associated with the hydronic boiler as they have much longer time constants than HVAC type systems.
+
+> [!Note]
+> This integration assumes a hydronic boiler system with one or more heat call switches with one/off type zone valves, all valves are assumed to be normally closed. If you have a steam radiator system or you have flow reducing valves or an always circulating system with reset controller or some other exotic boiler system. These aren't supported right now. If you are interested in adding support drop me a note or open a PR.
+
+### Room settings
+
+You must specify what "area" these settings are for any entities that this integration makes will be added to these areas.
+
+You must also specify a temperature sensor for the area, you can specify more than one if you like but you shouldn't need more than one. If you do specify more than one then the average reading is used for control. **Temperature sensors must be unique to each area, sharing temperature sensors across multiple areas is not allowed, because it's most likely a mistake.**
+
+In general because a heating or cooling appliance or zone may cover more than one room, it is ok and even desirable to reuse these entities across multiple rooms to capture their association with those rooms.
+
+Examples:
+Scenario 1: The first floor is on a single boiler zone(switch.boiler_zone1) but you have three rooms with one temp sensors in each room. There are several options on how this could be configured. 1. (Preferred) You can setup 3 different areas each with it's own temp sensor, and use the same switch.boiler_zone1 for the heat call in all three. 2. (Not Recommended) You can setup a single area in UltraStat and add all three temp sensors to it.  
+ 3. (Not Recommended) You only really care about one room, so you only setup a single area in UltraStat and only supply the associated temp sensor for the room you care about.
+
+        2 is not recommended as it provides less granular control, maybe you want to control to a different room at different times of day, option 2 doesn't allow for this. 3 omits information from UltraStat, which once adjacency information is added can help improve temperature control in the room you care about, you can just disable control in the rooms you aren't interested in after you setup UltraStat.
 
 ## Development Progress
 
