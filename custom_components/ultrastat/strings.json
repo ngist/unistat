@@ -72,7 +72,8 @@
       "boiler": {
         "title": "Boiler Setup",
         "data": {
-          "heat_call_entity": "Boiler zone controls(Input All)"
+          "heat_call_entity": "Boiler zone controls(Input All)",
+          "area": "Areas heated on any heat call"
         },
         "sections": {
           "energy_settings": {

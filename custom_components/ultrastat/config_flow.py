@@ -123,6 +123,9 @@ BOILER_SCHEMA = vol.Schema(
                 multiple=True,
             )
         ),
+        vol.Optional(CONF_AREA): selector.AreaSelector(
+            selector.AreaSelectorConfig(multiple=True)
+        ),
         vol.Optional("temp_sensors"): section(
             vol.Schema(
                 {
