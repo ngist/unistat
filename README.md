@@ -10,7 +10,6 @@
 [actions]: https://github.com/ngist/ultrastat/actions
 [build_badge]: https://img.shields.io/github/actions/workflow/status/ngist/ultrastat/pythonpackage.yaml?branch=main&style=for-the-badge
 
-
 > [!WARNING]
 > This integration is in the very early statges of active development, it's not ready for use do not install!. See [Development Progress](#development-progress)
 
@@ -27,25 +26,26 @@ It also allows you to select between several different modes:
 
 ## Motivation
 
-Why bother making another thermostat integration? 
+Why bother making another thermostat integration?
 
 - HA natively has thermostat helpers can't this all be done natively without a custom integration?
 
   Well yes it can, and in fact that's what I started with, well at least that's what I tried to do, but the complexity became unmanagable for my needs, too many entities, and too many automatations to keep track of properly, and very error prone and repetitious to make small changes. If you have a relatively simple heating/cooling setup this may be the best option for you.
-  
+
 - Why not use [Versatile Thermostat](https://github.com/jmcollin78/versatile_thermostat) or [Better Thermostat](https://github.com/KartoffelToby/better_thermostat) or [HASmartThermostat](https://github.com/ScratMan/HASmartThermostat)?
 
   Well actually you may want to go check them out, and look at the [Features](#features) below to compare.
 
-  Better and HASmartThermostat are both designed for working with a single room at a time, I want something that will manage multiple rooms elegantly especially when a heat or cooling call may cover more than one room at a time. Versatile has some functionality for managing multiple rooms but I don't think it handles multiple rooms on the same zone very well yet, additionally I don't think it can handle multiple heating appliances in the same room, I'll admit though there's alot of documentation and it wasn't entirely clear to me what it could and couldn't do. Versatile and HASmartThermostat also require manual tuning of the control loops, this was something I wanted to avoid, especially given the interaction between rooms in my house it seemed like this would be a sisyphian task.
+  Better and HASmartThermostat are both designed for working with a single room at a time, I want something that will manage multiple rooms elegantly especially when a heat or cooling call may cover more than one room at a time. Versatile has some functionality for managing multiple rooms but I don't think it handles multiple rooms on the same zone very well yet, additionally I don't think it can handle multiple heating appliances in the same room, I'll admit though there's a lot of documentation and it wasn't entirely clear to me what it could and couldn't do. Versatile and HASmartThermostat also require manual tuning of the control loops, this was something I wanted to avoid, especially given the interaction between rooms in my house it seemed like this would be a sisyphian task.
 
-  I'll use my house as an example to make concrete the use case. I have a multizone boiler setup with open/closed zone valves but one zone is always on if any boiler zone is called(this prevents to possiblility of the circulator pump driving into a closed system), I also have mini-split heatpumps in several rooms. I wanted a thermostat that would wisely choose between boiler heating and heatpump heating for any given room and ambient conditions, and also switch the heatpumps to cooling mode automatically when appropriate. At higher ambient temperatures the heatpumps are very efficient compared with the boiler but at much lower temperatures the heatumps either can't keep up in some rooms or are more costly to operate than the boiler, the goal is that this will use one or both heatsources as appropriate to maximize comfort and efficiency. Another problem I wanted to overcome is that basic on/off control of my boiler zones resulted in several degrees of overshoot so I wanted more optimal control.
+  I'll use my house as an example to make concrete the use case. I have a multizone boiler setup with open/closed zone valves but one zone is always on if any boiler zone is called(this prevents to possibility of the circulator pump driving into a closed system), I also have mini-split heatpumps in several rooms. I wanted a thermostat that would wisely choose between boiler heating and heatpump heating for any given room and ambient conditions, and also switch the heatpumps to cooling mode automatically when appropriate. At higher ambient temperatures the heatpumps are very efficient compared with the boiler but at much lower temperatures the heatumps either can't keep up in some rooms or are more costly to operate than the boiler, the goal is that this will use one or both heatsources as appropriate to maximize comfort and efficiency. Another problem I wanted to overcome is that basic on/off control of my boiler zones resulted in several degrees of overshoot so I wanted more optimal control.
 
 - What about xyz thermostat integration?
 
   At the time I started the project the above were the only ones I saw I didn't look at others.
 
 ## Should I use this?
+
 If you have a single HVAC zone for heating/cooling as many houses in the US do this is not the integration for you there are better options with fewer features, and less configuration.
 
 If you're in the situation where you have any of the following then this integration may be for you:
@@ -55,34 +55,39 @@ If you're in the situation where you have any of the following then this integra
 - You have multiple heating or cooling systems for the same area. Maybe you have an HVAC system and a supplemental window AC unit, or you have a boiler/radiator system but you also have minisplit heat-pumps.
 
 Supported control outputs:
- - switch (for simple on/off heating/cooling/humidification/dehumidification calls)
- - numeric (for TRVs or things that take a 0-100% value)
- - climate (for appliances that are already integrated into HA that have a climate interface)
+
+- switch (for simple on/off heating/cooling/humidification/dehumidification calls)
+- numeric (for TRVs or things that take a 0-100% value)
+- climate (for appliances that are already integrated into HA that have a climate interface)
 
 ## Features
 
 ### Planned
- - [ ] Handle rooms with multiple heating/cooling appliances.
- - [ ] Handle multiple rooms that are on the same heating or cooling zone 
- - [ ] Automatic tuning - no user configuration of control loop parameters everything is learned by mathemagic(or AI if you want to call it that).
- - [ ] Implement presets
- - [ ] Implement schedules
- - [ ] Smart Start - activates heating or cooling early so temp is acheived by the scheduled time.
- - [ ] Use external temperature to optimize control
- - [ ] Use boiler inlet/outlet temperatures to optimize control
- - [ ] Use external wind speed and direction to optimize control
- - [ ] Use solar irradiance to optimize control
- - [ ] Implement stale sensor detection
- - [ ] Implement freeze protection
- - [ ] Implement inferred temperature for stale sensors
- - [ ] Implement room adjacency for better control
- - [ ] Handle Grouped Mini-split heatpumps
+
+- [ ] Handle rooms with multiple heating/cooling appliances.
+- [ ] Handle multiple rooms that are on the same heating or cooling zone
+- [ ] Automatic tuning - no user configuration of control loop parameters everything is learned by mathemagic(or AI if you want to call it that).
+- [ ] Implement presets
+- [ ] Implement schedules
+- [ ] Smart Start - activates heating or cooling early so temp is achieved by the scheduled time.
+- [ ] Use external temperature to optimize control
+- [ ] Use boiler inlet/outlet temperatures to optimize control
+- [ ] Use external wind speed and direction to optimize control
+- [ ] Use solar irradiance to optimize control
+- [ ] Implement stale sensor detection
+- [ ] Implement freeze protection
+- [ ] Implement inferred temperature for stale sensors
+- [ ] Implement room adjacency for better control
+- [ ] Handle Grouped Mini-split heatpumps
+- [ ] Implement TRV support
 
 ### Not Planned
-[Versatile Thermostat](https://github.com/jmcollin78/versatile_thermostat) offers many of these features but they are intentionally not planned to avoid added complexity 
- - Automatic room control based on occupancy (this can be setup externally if desired)
- - Automatic room control based on opening or closing a door or window (can be setup externally if desired)
- - Power shedding
+
+[Versatile Thermostat](https://github.com/jmcollin78/versatile_thermostat) offers many of these features but they are intentionally not planned to avoid added complexity
+
+- Automatic room control based on occupancy (this can be setup externally if desired)
+- Automatic room control based on opening or closing a door or window (can be setup externally if desired)
+- Power shedding
 
 ## Prerequisites
 
@@ -105,6 +110,7 @@ These are entirely optional, but populating at least outside temperature is reco
 If you have a weather station you can use entities from this to populate outdoor sensors, if you don't have a weather station you can use a weather integration to provide these entities.
 
 Rough order of importance of outside sensors:
+
 1. Temperature (this matters for everyone)
 2. Wind Speed (this will matter more for older drafty homes)
 3. Wind Direction (this will matter more for older drafty homes)
@@ -123,10 +129,10 @@ You must specify what home assistant "area" these settings are for any entities 
 
 You must specify a temperature sensor for the area, you can specify more than one if you like but you shouldn't need more than one if it's well placed. If you do specify more than one then the average reading is used for control. **Temperature sensors must be unique to each area, sharing temperature sensors across multiple areas is not allowed**
 
-You can optionally specify a humidity sesnor for the area, if you also want to control a humidity appliance.
+You can optionally specify a humidity sensor for the area, if you also want to control a humidity appliance.
 **Humidity sensors must be unique to each area, sharing temperature sensors across multiple areas is not allowed**
 
-In general because a heating or cooling appliance or zone may cover more than one room, it is allowed and even recommended to reuse these entities across multiple rooms to capture their association with those rooms. 
+In general because a heating or cooling appliance or zone may cover more than one room, it is allowed and even recommended to reuse these entities across multiple rooms to capture their association with those rooms.
 
 Examples:
 Scenario 1: The first floor is on a single boiler zone(switch.boiler_zone1) but you have three rooms with one temp sensors in each room. There are several options on how this could be configured. 1. (Preferred) You can setup 3 different areas each with it's own temp sensor, and use the same switch.boiler_zone1 for the heat call in all three. 2. (Not Recommended) You can setup a single area in UltraStat and add all three temp sensors to it.  
