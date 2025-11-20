@@ -2,116 +2,33 @@
 
 from unittest.mock import AsyncMock
 
+from .constants import (
+    MAIN_SETTINGS_MINIMAL,
+    MAIN_SETTINGS_MAXIMAL,
+    BOILER_SETTINGS_MAXIMAL,
+    ROOM_1_SETTINGS,
+    ROOM_2_SETTINGS,
+    ROOM_3_SETTINGS,
+    ROOM_1_SETTINGS_HUMIDITY,
+    ROOM_2_DUPE_TEMP_OUTSIDE,
+    ROOM_2_DUPE_AREA,
+    ROOM_2_DUPE_HUMIDITY_INSIDE,
+    ROOM_2_DUPE_HUMIDITY_OUTSIDE,
+    ROOM_2_DUPE_TEMP_BOILER,
+    ROOM_2_DUPE_TEMP_INSIDE,
+)
 from custom_components.ultrastat.const import (
-    CONF_AREA,
-    CONF_BOILER_BTUH,
-    CONF_BOILER_INTLET_TEMP_ENTITY,
-    CONF_BOILER_METER,
-    CONF_BOILER_OUTLET_TEMP_ENTITY,
-    CONF_BOILER_UNIT_COST,
-    CONF_BOILER,
-    CONF_CONTROL_MODE,
-    CONF_COOLING,
-    CONF_DEHUMIDIFICATION,
-    CONF_HEATING_CALL_ENTITY,
-    CONF_HEATING,
-    CONF_HUMIDIFICATION,
-    CONF_HUMIDITY_ENTITY,
-    CONF_NUM_ROOMS,
-    CONF_OUTDOOR_SENSORS,
-    CONF_SOLAR_FLUX_ENTITY,
-    CONF_TEMP_ENTITIES,
-    CONF_WIND_DIRECTION_ENTITY,
-    CONF_WIND_SPEED_ENTITY,
-    CONF_CLIMATE_ENTITY,
-    CONF_COOLING_CALL_ENTITY,
-    CONF_HUMIDIFY_CALL_ENTITY,
-    CONF_DEHUMIDIFY_CALL_ENTITY,
     DOMAIN,
-    ControlMode,
 )
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_NAME, CONF_TEMPERATURE_UNIT, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 pytestmark = pytest.mark.usefixtures("mock_setup_entry")
 
-MAIN_SETTINGS_MINIMAL = {
-    CONF_NAME: "My ultrastat",
-    CONF_NUM_ROOMS: 1,
-    CONF_BOILER: False,
-    # CONF_ADJACENCY: False, #TODO re-enable one adjacency is added back
-    CONF_CONTROL_MODE: ControlMode.COMFORT,
-    CONF_TEMPERATURE_UNIT: UnitOfTemperature.FAHRENHEIT,
-}
-
-MAIN_SETTINGS_MAXIMAL = {
-    CONF_NAME: "My ultrastat",
-    CONF_NUM_ROOMS: 3,
-    CONF_BOILER: True,
-    # CONF_ADJACENCY: False, #TODO re-enable one adjacency is added back
-    CONF_CONTROL_MODE: ControlMode.COMFORT,
-    CONF_TEMPERATURE_UNIT: UnitOfTemperature.FAHRENHEIT,
-    CONF_OUTDOOR_SENSORS: {
-        CONF_TEMP_ENTITIES: "sensor.outside_temp",
-        CONF_HUMIDITY_ENTITY: "sensor.outside_humidity",
-        CONF_WIND_SPEED_ENTITY: "sensor.wind_speed",
-        CONF_WIND_DIRECTION_ENTITY: "sensor.wind_direction",
-        CONF_SOLAR_FLUX_ENTITY: "sensor.solar_irradiance",
-    },
-}
-
-BOILER_SETTINGS_MINIMAL = {
-    CONF_HEATING_CALL_ENTITY: ["switch.zone1"],
-}
-
-BOILER_SETTINGS_MAXIMAL = {
-    CONF_HEATING_CALL_ENTITY: ["switch.zone1"],
-    CONF_AREA: ["area.living_room", "area.kitchen"],
-    "temp_sensors": {
-        CONF_BOILER_INTLET_TEMP_ENTITY: "sensor.inlet_temp",
-        CONF_BOILER_OUTLET_TEMP_ENTITY: "sensor.outlet_temp",
-    },
-    "energy_settings": {
-        CONF_BOILER_BTUH: 140000,
-        CONF_BOILER_METER: "utility_meter.boiler",
-        CONF_BOILER_UNIT_COST: 0.5,
-    },
-}
-
-ROOM_1_SETTINGS = {
-    CONF_AREA: "area.living_room",
-    CONF_TEMP_ENTITIES: ["sensor.room1_temp"],
-}
-ROOM_2_SETTINGS = {
-    CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.room2_temp"],
-}
-
-ROOM_3_SETTINGS = {
-    CONF_AREA: "area.bedroom",
-    CONF_TEMP_ENTITIES: ["sensor.room3_temp"],
-    CONF_HEATING: {
-        CONF_HEATING_CALL_ENTITY: "switch.boiler_zone1",
-        CONF_CLIMATE_ENTITY: "climate.heatpump1",
-    },
-    CONF_COOLING: {
-        CONF_COOLING_CALL_ENTITY: "switch.boiler_zone1",
-        CONF_CLIMATE_ENTITY: "climate.heatpump1",
-    },
-    CONF_HUMIDIFICATION: {
-        CONF_HUMIDIFY_CALL_ENTITY: "switch.humidifier",
-        CONF_CLIMATE_ENTITY: "climate.heatpump1",
-    },
-    CONF_DEHUMIDIFICATION: {
-        CONF_DEHUMIDIFY_CALL_ENTITY: "switch.dehumidifier",
-        CONF_CLIMATE_ENTITY: "climate.heatpump1",
-    },
-}
 
 PLATFORMS = ["climate"]
 
@@ -227,38 +144,6 @@ async def test_maximal_config_flow(
     assert config_entry.options == {}
     assert config_entry.title == "My ultrastat"
 
-
-ROOM_1_SETTINGS_HUMIDITY = {
-    CONF_AREA: "area.living_room",
-    CONF_TEMP_ENTITIES: ["sensor.room1_temp"],
-    CONF_HUMIDITY_ENTITY: "sensor.room1_humidity",
-}
-ROOM_2_DUPE_AREA = {
-    CONF_AREA: "area.living_room",
-    CONF_TEMP_ENTITIES: ["sensor.room2_temp"],
-}
-ROOM_2_DUPE_TEMP_INSIDE = {
-    CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.room1_temp"],
-}
-ROOM_2_DUPE_TEMP_OUTSIDE = {
-    CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.outside_temp"],
-}
-ROOM_2_DUPE_TEMP_BOILER = {
-    CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.inlet_temp"],
-}
-ROOM_2_DUPE_HUMIDITY_INSIDE = {
-    CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.room2_temp"],
-    CONF_HUMIDITY_ENTITY: "sensor.room1_humidity",
-}
-ROOM_2_DUPE_HUMIDITY_OUTSIDE = {
-    CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.room2_temp"],
-    CONF_HUMIDITY_ENTITY: "sensor.room1_humidity",
-}
 
 DUPLICATE_CASES = [
     (ROOM_2_DUPE_AREA, "area_reused"),
