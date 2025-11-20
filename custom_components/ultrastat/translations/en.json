@@ -94,6 +94,11 @@
           }
         }
       }
+    },
+    "error": {
+      "temp_sensor_reused": "Temperature sensor {temp_reused} cannot be reused.",
+      "humidity_sensor_reused": "Humidity sensor {humidity_reused} cannot be reused.",
+      "area_reused": "Area {area_reused} cannot be reused."
     }
   },
   "options": {
@@ -104,10 +109,5 @@
         }
       }
     }
-  },
-  "error": {
-    "temp_sensor_reused": "Temperature sensor {temp_reused} cannot be reused.",
-    "humidity_sensor_reused": "Humidity sensor {humidity_reused} cannot be reused.",
-    "area_reused": "Area {area_reused} cannot be reused."
   }
 }
