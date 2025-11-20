@@ -38,7 +38,7 @@ MAIN_SETTINGS_MINIMAL = {
 }
 
 MAIN_SETTINGS_MAXIMAL = {
-    CONF_NAME: "My ultrastat",
+    CONF_NAME: "My UniStat",
     CONF_NUM_ROOMS: 3,
     CONF_BOILER: True,
     # CONF_ADJACENCY: False, #TODO re-enable one adjacency is added back
@@ -79,6 +79,7 @@ ROOM_2_SETTINGS = {
 ROOM_3_SETTINGS = {
     CONF_AREA: "area.bedroom",
     CONF_TEMP_ENTITIES: ["sensor.room3_temp"],
+    CONF_HUMIDITY_ENTITY: "sensor.room3_humidity",
     CONF_HEATING: {
         CONF_HEATING_CALL_ENTITY: "switch.boiler_zone1",
         CONF_CLIMATE_ENTITY: "climate.heatpump1",

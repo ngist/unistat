@@ -130,7 +130,7 @@ async def test_maximal_config_flow(
     await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == "My ultrastat"
+    assert result["title"] == "My UniStat"
     expected = MAIN_SETTINGS_MAXIMAL.copy()
     expected["room_conf"] = [ROOM_1_SETTINGS, ROOM_2_SETTINGS, ROOM_3_SETTINGS]
     expected["boiler_conf"] = BOILER_SETTINGS_MAXIMAL
@@ -142,7 +142,7 @@ async def test_maximal_config_flow(
     config_entry = hass.config_entries.async_entries(DOMAIN)[0]
     assert config_entry.data == expected
     assert config_entry.options == {}
-    assert config_entry.title == "My ultrastat"
+    assert config_entry.title == "My UniStat"
 
 
 DUPLICATE_CASES = [
@@ -229,9 +229,9 @@ async def test_options(hass: HomeAssistant, platform) -> None:
         domain=DOMAIN,
         options={
             "entity_id": input_sensor_1_entity_id,
-            "name": "My ultrastat",
+            "name": "My UniStat",
         },
-        title="My ultrastat",
+        title="My UniStat",
     )
     config_entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(config_entry.entry_id)
@@ -252,14 +252,14 @@ async def test_options(hass: HomeAssistant, platform) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"] == {
         "entity_id": input_sensor_2_entity_id,
-        "name": "My ultrastat",
+        "name": "My UniStat",
     }
     assert config_entry.data == {}
     assert config_entry.options == {
         "entity_id": input_sensor_2_entity_id,
-        "name": "My ultrastat",
+        "name": "My UniStat",
     }
-    assert config_entry.title == "My ultrastat"
+    assert config_entry.title == "My UniStat"
 
     # Check config entry is reloaded with new options
     await hass.async_block_till_done()
@@ -268,5 +268,5 @@ async def test_options(hass: HomeAssistant, platform) -> None:
     assert len(hass.states.async_all()) == 1
 
     # TODO Check the state of the entity has changed as expected
-    state = hass.states.get(f"{platform}.my_ultrastat")
+    state = hass.states.get(f"{platform}.my_unistat")
     assert state.attributes == {}

@@ -1,9 +1,14 @@
 """Test the UltraStat integration."""
 
+from .constants import (
+    MAIN_SETTINGS_MAXIMAL,
+    BOILER_SETTINGS_MAXIMAL,
+    ROOM_1_SETTINGS,
+    ROOM_2_SETTINGS,
+    ROOM_3_SETTINGS,
+)
 from custom_components.ultrastat.const import (
-    CONF_ADJACENCY,
-    CONF_BOILER,
-    CONF_TEMP_ENTITIES,
+    CONF_AREA,
     DOMAIN,
 )
 import pytest
@@ -21,51 +26,72 @@ async def test_setup_and_remove_config_entry(
     platform: str,
 ) -> None:
     """Test setting up and removing a config entry."""
-    input_sensor_entity_id = "sensor.input"
-    ultrastat_entity_id = f"{platform}.my_ultrastat"
+    data = MAIN_SETTINGS_MAXIMAL.copy()
+    data["room_conf"] = [ROOM_1_SETTINGS, ROOM_2_SETTINGS, ROOM_3_SETTINGS]
+    data["boiler_conf"] = BOILER_SETTINGS_MAXIMAL
 
+    entity_ids = [
+        f"{platform}.my_unistat_{room[CONF_AREA].rsplit('.', 1)[1]}"
+        for room in data["room_conf"]
+    ]
+    friendly_names = [
+        f"My UniStat {room[CONF_AREA].rsplit('.', 1)[1]}" for room in data["room_conf"]
+    ]
+    print(entity_ids)
     # Setup the config entry
     config_entry = MockConfigEntry(
-        data={
-            CONF_TEMP_ENTITIES: [input_sensor_entity_id],
-            "name": "My ultrastat",
-            "room_conf": [{}],
-            CONF_BOILER: False,
-            CONF_ADJACENCY: False,
-        },
+        data=data,
         domain=DOMAIN,
         options={},
-        title="My ultrastat",
     )
     config_entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    # Check the entity is registered in the entity registry
-    assert entity_registry.async_get(ultrastat_entity_id) is not None
+    # Check the entities are registered in the entity registry
 
-    # Check the platform is setup correctly
-    state = hass.states.get(ultrastat_entity_id)
-    # TODO Check the state of the entity has changed as expected
-    assert state.state == "off"
-    assert state.attributes == {
+    common_attribs = {
         "current_temperature": None,
-        "friendly_name": "My ultrastat",
-        "hvac_modes": [
+        "hvac_modes": (
             HVACMode.OFF,
-            HVACMode.COOL,
-            HVACMode.HEAT,
-            HVACMode.HEAT_COOL,
-        ],
-        "max_temp": 35.0,
-        "min_temp": 7.0,
-        "supported_features": ClimateEntityFeature(0),
+            HVACMode.AUTO,
+        ),
+        "max_temp": 29.4,
+        "min_temp": 15.6,
+        "target_temp_high": 22.8,
+        "target_temp_low": 21.7,
+        "target_temp_step": 1,
+        "temperature": 22.2,
+        "supported_features": (
+            ClimateEntityFeature.TARGET_TEMPERATURE
+            | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+            | ClimateEntityFeature.TURN_ON
+            | ClimateEntityFeature.TURN_OFF
+        ),
     }
+
+    for eid, friendly_name in zip(entity_ids, friendly_names):
+        assert entity_registry.async_get(eid) is not None
+
+        # Check the platform is setup correctly
+        state = hass.states.get(eid)
+        assert state.state == "off"
+        expected_attributes = {**common_attribs, "friendly_name": friendly_name}
+        if eid == entity_ids[-1]:
+            expected_attributes.update(
+                {"humidity": 40, "max_humidity": 70, "min_humidity": 20}
+            )
+            expected_attributes["supported_features"] = (
+                common_attribs["supported_features"]
+                | ClimateEntityFeature.TARGET_HUMIDITY
+            )
+        assert state.attributes == expected_attributes
 
     # Remove the config entry
     assert await hass.config_entries.async_remove(config_entry.entry_id)
     await hass.async_block_till_done()
 
     # Check the state and entity registry entry are removed
-    assert hass.states.get(ultrastat_entity_id) is None
-    assert entity_registry.async_get(ultrastat_entity_id) is None
+    for eid in entity_ids:
+        assert hass.states.get(eid) is None
+        assert entity_registry.async_get(eid) is None
