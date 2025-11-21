@@ -23,7 +23,7 @@ from .const import (
     CONF_ADJACENCY,
     CONF_AREA,
     CONF_BOILER_BTUH,
-    CONF_BOILER_INTLET_TEMP_ENTITY,
+    CONF_BOILER_INLET_TEMP_ENTITY,
     CONF_BOILER_METER,
     CONF_BOILER_OUTLET_TEMP_ENTITY,
     CONF_BOILER_UNIT_COST,
@@ -128,7 +128,7 @@ BOILER_SCHEMA = vol.Schema(
             vol.Schema(
                 {
                     vol.Optional(
-                        CONF_BOILER_INTLET_TEMP_ENTITY
+                        CONF_BOILER_INLET_TEMP_ENTITY
                     ): selector.EntitySelector(
                         selector.EntitySelectorConfig(
                             domain=SENSOR_DOMAIN,
@@ -300,9 +300,9 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             # Do validation
             boiler_temp_entities = []
             if "temp_sensors" in user_input:
-                if CONF_BOILER_INTLET_TEMP_ENTITY in user_input["temp_sensors"]:
+                if CONF_BOILER_INLET_TEMP_ENTITY in user_input["temp_sensors"]:
                     boiler_temp_entities.append(
-                        user_input["temp_sensors"][CONF_BOILER_INTLET_TEMP_ENTITY]
+                        user_input["temp_sensors"][CONF_BOILER_INLET_TEMP_ENTITY]
                     )
                 if CONF_BOILER_OUTLET_TEMP_ENTITY in user_input["temp_sensors"]:
                     boiler_temp_entities.append(

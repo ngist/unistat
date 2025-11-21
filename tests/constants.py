@@ -2,7 +2,7 @@ from homeassistant.const import CONF_NAME, CONF_TEMPERATURE_UNIT, UnitOfTemperat
 from custom_components.unistat.const import (
     CONF_AREA,
     CONF_BOILER_BTUH,
-    CONF_BOILER_INTLET_TEMP_ENTITY,
+    CONF_BOILER_INLET_TEMP_ENTITY,
     CONF_BOILER_METER,
     CONF_BOILER_OUTLET_TEMP_ENTITY,
     CONF_BOILER_UNIT_COST,
@@ -57,7 +57,7 @@ BOILER_SETTINGS_MAXIMAL = {
     CONF_HEATING_CALL_ENTITY: ["switch.zone1"],
     CONF_AREA: ["living_room", "kitchen"],
     "temp_sensors": {
-        CONF_BOILER_INTLET_TEMP_ENTITY: "sensor.inlet_temp",
+        CONF_BOILER_INLET_TEMP_ENTITY: "sensor.inlet_temp",
         CONF_BOILER_OUTLET_TEMP_ENTITY: "sensor.outlet_temp",
     },
     "energy_settings": {

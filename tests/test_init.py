@@ -50,6 +50,7 @@ async def test_setup_and_remove_config_entry(
         "current_temperature": None,
         "hvac_modes": (
             HVACMode.OFF,
+            HVACMode.HEAT_COOL,
             HVACMode.AUTO,
         ),
         "max_temp": 29.4,

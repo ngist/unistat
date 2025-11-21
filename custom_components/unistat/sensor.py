@@ -23,10 +23,10 @@ async def async_setup_entry(
     name = config_entry.title
     unique_id = config_entry.entry_id
 
-    async_add_entities([unistatSensorEntity(unique_id, name, entity_id)])
+    async_add_entities([UniStatSensorEntity(unique_id, name, entity_id)])
 
 
-class unistatSensorEntity(SensorEntity):
+class UniStatSensorEntity(SensorEntity):
     """unistat Sensor."""
 
     def __init__(self, unique_id: str, name: str, wrapped_entity_id: str) -> None:

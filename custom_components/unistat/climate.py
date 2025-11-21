@@ -81,7 +81,7 @@ async def async_setup_entry(
     climate_entities = []
     for room in config_entry.data["room_conf"]:
         base_name = config_entry.data[CONF_NAME]
-        _LOGGER.warning(
+        _LOGGER.info(
             "Configuring thermostat UI for %s",
             room[CONF_AREA],
         )
@@ -125,6 +125,7 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
     _attr_has_entity_name = True
     _attr_hvac_modes = (
         HVACMode.OFF,
+        HVACMode.HEAT_COOL,
         HVACMode.AUTO,
     )
 
@@ -363,11 +364,18 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
 
     async def async_set_humidity(self, humidity):
         """Set new target humidity."""
-        raise NotImplementedError
+        if humidity is None:
+            return
+        self._attr_target_humidity = humidity
+        self.async_write_ha_state()
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
-        raise NotImplementedError
+        if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
+            return
+        self._attr_preset_mode = self._presets_inv.get(temperature, PRESET_NONE)
+        self._attr_target_temperature = temperature
+        self.async_write_ha_state()
 
     async def async_set_preset_mode(self, preset_mode):
         """Set new preset mode."""
