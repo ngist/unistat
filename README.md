@@ -4,11 +4,11 @@
 [![License][license_shield]](LICENSE)
 [![hacs][hacs_badge]][hacs]
 
-[license_shield]: https://img.shields.io/github/license/ngist/ultrastat?style=for-the-badge
+[license_shield]: https://img.shields.io/github/license/ngist/unistat?style=for-the-badge
 [hacs]: https://github.com/custom-components/hacs
 [hacs_badge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge
-[actions]: https://github.com/ngist/ultrastat/actions
-[build_badge]: https://img.shields.io/github/actions/workflow/status/ngist/ultrastat/pythonpackage.yaml?branch=main&style=for-the-badge
+[actions]: https://github.com/ngist/unistat/actions
+[build_badge]: https://img.shields.io/github/actions/workflow/status/ngist/unistat/pythonpackage.yaml?branch=main&style=for-the-badge
 
 > [!WARNING]
 > This integration is in the very early statges of active development, it's not ready for use do not install!. See [Development Progress](#development-progress)
@@ -121,7 +121,7 @@ Rough order of importance of outside sensors:
 If you have a hydronic(aka water) boiler then you'll want to specify the heat call switch or switches if you have a multizone system. It's important for the system to know which controls are associated with the hydronic boiler as they have much longer time constants than HVAC/Heatpump/electric type systems.
 
 > [!Note]
-> This integration assumes a hydronic boiler system with one or more heat call switches for one/off type zone valves(all valves are assumed to be normally closed, if you have a normally open valve invert it before passing it in), or flow regulating valves(TRVs). If you have an always circulating system with reset controller or some other exotic boiler system. These aren't supported right now. If you are interested in adding support open a pr or [issue](https://github.com/ngist/ultrastat/issues)
+> This integration assumes a hydronic boiler system with one or more heat call switches for one/off type zone valves(all valves are assumed to be normally closed, if you have a normally open valve invert it before passing it in), or flow regulating valves(TRVs). If you have an always circulating system with reset controller or some other exotic boiler system. These aren't supported right now. If you are interested in adding support open a pr or [issue](https://github.com/ngist/unistat/issues)
 
 ### Room settings
 
@@ -135,7 +135,7 @@ You can optionally specify a humidity sensor for the area, if you also want to c
 In general because a heating or cooling appliance or zone may cover more than one room, it is allowed and even recommended to reuse these entities across multiple rooms to capture their association with those rooms.
 
 Examples:
-Scenario 1: The first floor is on a single boiler zone(switch.boiler_zone1) but you have three rooms with one temp sensors in each room. There are several options on how this could be configured. 1. (Preferred) You can setup 3 different areas each with it's own temp sensor, and use the same switch.boiler_zone1 for the heat call in all three. 2. (Not Recommended) You can setup a single area in UltraStat and add all three temp sensors to it.  
- 3. (Not Recommended) You only really care about one room, so you only setup a single area in UltraStat and only supply the associated temp sensor for the room you care about.
+Scenario 1: The first floor is on a single boiler zone(switch.boiler_zone1) but you have three rooms with one temp sensors in each room. There are several options on how this could be configured. 1. (Preferred) You can setup 3 different areas each with it's own temp sensor, and use the same switch.boiler_zone1 for the heat call in all three. 2. (Not Recommended) You can setup a single area in UniStat and add all three temp sensors to it.  
+ 3. (Not Recommended) You only really care about one room, so you only setup a single area in UniStat and only supply the associated temp sensor for the room you care about.
 
         2 is not recommended as it provides less granular control, maybe you want to control to a different room at different times of day, option 2 doesn't allow for this. 3 omits information from UltraStat, which once adjacency information is added can help improve temperature control in the room you care about, you can just disable control in the rooms you aren't interested in after you setup UltraStat.
