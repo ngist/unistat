@@ -17,7 +17,7 @@
             "name": "Outdoor Sensors(Optional)",
             "description": "These sensors may improve performance",
             "data": {
-              "temp_entities": "Temperature Sensor",
+              "temp_entity": "Temperature Sensor",
               "humidity_entity": "Humidity Sensor",
               "wind_speed_entity": "Wind Speed Sensor",
               "wind_direction_entity": "Wind Direction Sensor",
@@ -31,7 +31,7 @@
         "description": "Configure heating/cooling entities for x",
         "data": {
           "area": "Area",
-          "temp_entities": "Temperature Sensor(s)",
+          "temp_entity": "Temperature Sensor",
           "humidity_entity": "Humidity Sensor"
         },
         "sections": {

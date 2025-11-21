@@ -5,7 +5,7 @@ from enum import StrEnum
 DOMAIN = "ultrastat"
 
 # General Purpose (used multiple forms)
-CONF_TEMP_ENTITIES = "temp_entities"
+CONF_TEMP_ENTITY = "temp_entity"
 CONF_HUMIDITY_ENTITY = "humidity_entity"
 CONF_CLIMATE_ENTITY = "climate_entity"
 

@@ -17,7 +17,7 @@ from custom_components.ultrastat.const import (
     CONF_NUM_ROOMS,
     CONF_OUTDOOR_SENSORS,
     CONF_SOLAR_FLUX_ENTITY,
-    CONF_TEMP_ENTITIES,
+    CONF_TEMP_ENTITY,
     CONF_WIND_DIRECTION_ENTITY,
     CONF_WIND_SPEED_ENTITY,
     CONF_CLIMATE_ENTITY,
@@ -45,7 +45,7 @@ MAIN_SETTINGS_MAXIMAL = {
     CONF_CONTROL_MODE: ControlMode.COMFORT,
     CONF_TEMPERATURE_UNIT: UnitOfTemperature.FAHRENHEIT,
     CONF_OUTDOOR_SENSORS: {
-        CONF_TEMP_ENTITIES: "sensor.outside_temp",
+        CONF_TEMP_ENTITY: "sensor.outside_temp",
         CONF_HUMIDITY_ENTITY: "sensor.outside_humidity",
         CONF_WIND_SPEED_ENTITY: "sensor.wind_speed",
         CONF_WIND_DIRECTION_ENTITY: "sensor.wind_direction",
@@ -69,16 +69,16 @@ BOILER_SETTINGS_MAXIMAL = {
 
 ROOM_1_SETTINGS = {
     CONF_AREA: "area.living_room",
-    CONF_TEMP_ENTITIES: ["sensor.room1_temp"],
+    CONF_TEMP_ENTITY: "sensor.room1_temp",
 }
 ROOM_2_SETTINGS = {
     CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.room2_temp"],
+    CONF_TEMP_ENTITY: "sensor.room2_temp",
 }
 
 ROOM_3_SETTINGS = {
     CONF_AREA: "area.bedroom",
-    CONF_TEMP_ENTITIES: ["sensor.room3_temp"],
+    CONF_TEMP_ENTITY: "sensor.room3_temp",
     CONF_HUMIDITY_ENTITY: "sensor.room3_humidity",
     CONF_HEATING: {
         CONF_HEATING_CALL_ENTITY: "switch.boiler_zone1",
@@ -102,32 +102,32 @@ ROOM_3_SETTINGS = {
 
 ROOM_1_SETTINGS_HUMIDITY = {
     CONF_AREA: "area.living_room",
-    CONF_TEMP_ENTITIES: ["sensor.room1_temp"],
+    CONF_TEMP_ENTITY: "sensor.room1_temp",
     CONF_HUMIDITY_ENTITY: "sensor.room1_humidity",
 }
 ROOM_2_DUPE_AREA = {
     CONF_AREA: "area.living_room",
-    CONF_TEMP_ENTITIES: ["sensor.room2_temp"],
+    CONF_TEMP_ENTITY: "sensor.room2_temp",
 }
 ROOM_2_DUPE_TEMP_INSIDE = {
     CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.room1_temp"],
+    CONF_TEMP_ENTITY: "sensor.room1_temp",
 }
 ROOM_2_DUPE_TEMP_OUTSIDE = {
     CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.outside_temp"],
+    CONF_TEMP_ENTITY: "sensor.outside_temp",
 }
 ROOM_2_DUPE_TEMP_BOILER = {
     CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.inlet_temp"],
+    CONF_TEMP_ENTITY: "sensor.inlet_temp",
 }
 ROOM_2_DUPE_HUMIDITY_INSIDE = {
     CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.room2_temp"],
+    CONF_TEMP_ENTITY: "sensor.room2_temp",
     CONF_HUMIDITY_ENTITY: "sensor.room1_humidity",
 }
 ROOM_2_DUPE_HUMIDITY_OUTSIDE = {
     CONF_AREA: "area.kitchen",
-    CONF_TEMP_ENTITIES: ["sensor.room2_temp"],
+    CONF_TEMP_ENTITY: "sensor.room2_temp",
     CONF_HUMIDITY_ENTITY: "sensor.room1_humidity",
 }

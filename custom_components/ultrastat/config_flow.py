@@ -42,7 +42,7 @@ from .const import (
     CONF_NUM_ROOMS,
     CONF_OUTDOOR_SENSORS,
     CONF_SOLAR_FLUX_ENTITY,
-    CONF_TEMP_ENTITIES,
+    CONF_TEMP_ENTITY,
     CONF_WIND_DIRECTION_ENTITY,
     CONF_WIND_SPEED_ENTITY,
     DOMAIN,
@@ -76,7 +76,7 @@ MAIN_SCHEMA = vol.Schema(
         vol.Optional(CONF_OUTDOOR_SENSORS): section(
             vol.Schema(
                 {
-                    vol.Optional(CONF_TEMP_ENTITIES): selector.EntitySelector(
+                    vol.Optional(CONF_TEMP_ENTITY): selector.EntitySelector(
                         selector.EntitySelectorConfig(
                             domain=SENSOR_DOMAIN,
                             device_class=SensorDeviceClass.TEMPERATURE,
@@ -180,11 +180,10 @@ BOILER_SCHEMA = vol.Schema(
 ROOM_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_AREA): selector.AreaSelector(),
-        vol.Required(CONF_TEMP_ENTITIES): selector.EntitySelector(
+        vol.Required(CONF_TEMP_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(
                 domain=SENSOR_DOMAIN,
                 device_class=SensorDeviceClass.TEMPERATURE,
-                multiple=True,
             )
         ),
         vol.Optional(CONF_HUMIDITY_ENTITY): selector.EntitySelector(
@@ -275,9 +274,9 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             self.added_humidity_sensors = set()
             self.added_areas = set()
             if CONF_OUTDOOR_SENSORS in user_input:
-                if CONF_TEMP_ENTITIES in user_input[CONF_OUTDOOR_SENSORS]:
+                if CONF_TEMP_ENTITY in user_input[CONF_OUTDOOR_SENSORS]:
                     self.added_temp_sensors.add(
-                        user_input[CONF_OUTDOOR_SENSORS][CONF_TEMP_ENTITIES]
+                        user_input[CONF_OUTDOOR_SENSORS][CONF_TEMP_ENTITY]
                     )
                 if CONF_HUMIDITY_ENTITY in user_input[CONF_OUTDOOR_SENSORS]:
                     self.added_humidity_sensors.add(
@@ -363,8 +362,8 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 reused_area = set([user_input[CONF_AREA]])
                 errors["area_reused"] = "area_reused"
 
-            reused_temp = set(user_input[CONF_TEMP_ENTITIES]) & self.added_temp_sensors
-            if reused_temp:
+            if user_input[CONF_TEMP_ENTITY] in self.added_temp_sensors:
+                reused_temp = set([user_input[CONF_TEMP_ENTITY]])
                 errors["temp_sensor_reused"] = "temp_sensor_reused"
 
             if CONF_HUMIDITY_ENTITY in user_input:
@@ -376,7 +375,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 # Input is valid, set data.
                 self.data["room_conf"].append(user_input)
                 self.added_areas.add(user_input[CONF_AREA])
-                self.added_temp_sensors |= set(user_input[CONF_TEMP_ENTITIES])
+                self.added_temp_sensors.add(user_input[CONF_TEMP_ENTITY])
                 if CONF_HUMIDITY_ENTITY in user_input:
                     self.added_humidity_sensors.add(user_input[CONF_HUMIDITY_ENTITY])
 
