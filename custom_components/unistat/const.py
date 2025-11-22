@@ -37,6 +37,8 @@ CONF_BOILER_UNIT_COST = "boiler_unit_cost"
 CONF_BOILER_INLET_TEMP_ENTITY = "boiler_inlet_temp"
 CONF_BOILER_OUTLET_TEMP_ENTITY = "boiler_outlet_temp"
 
+SERVICE_ADD_ROOM = "add_room"
+
 
 class ControlMode(StrEnum):
     """Thermostat Modes."""
