@@ -43,6 +43,23 @@ class UniStatModelParams(NamedTuple):
     boiler_thermal_masses: npt.ArrayLike
     internal_loads: npt.ArrayLike
 
+    def from_params(self, parameters: npt.NDArray) -> Self:
+        """Take in an array and return a new UniStatModelParams.
+
+        The input parameters must match the size and ordering of the tunable_params property.
+        Presumably those from a model fitting process.
+
+        """
+        data = self._asdict()
+
+        first = 0
+        for tf in self.tunable_fields:
+            last = first + np.size(data[tf])
+            data[tf] = parameters[first:last]
+            first = last
+
+        return UniStatModelParams(**data)
+
     def __eq__(self, value):
         """Check for equivalence"""
         if not isinstance(value, (UniStatModelParams)):
@@ -61,6 +78,7 @@ class UniStatModelParams(NamedTuple):
 
     @property
     def tunable_fields(self) -> List[str]:
+        """Returns list of fields that contain tunable parameters"""
         return [
             "thermal_lag",
             "room_thermal_masses",
@@ -74,6 +92,7 @@ class UniStatModelParams(NamedTuple):
 
     @property
     def bounds_map(self) -> Dict[str, Tuple[float, float]]:
+        """Dict of fields and their corresponding valid ranges"""
         return {
             "thermal_lag": (3600 * 0.25, 3600 * 12),
             "room_thermal_masses": (100, 10000),
@@ -142,23 +161,6 @@ class UniStatModelParams(NamedTuple):
         ones_and_zeros = np.all((adjacency_matrix == 0) | (adjacency_matrix == 1))
         upper_triangle = np.array_equal(np.triu(adjacency_matrix, 1), adjacency_matrix)
         return ones_and_zeros and upper_triangle and right_size
-
-    def from_params(self, parameters: npt.NDArray) -> Self:
-        """Take in an array and return a new UniStatModelParams.
-
-        The input parameters must match the size and ordering of the tunable_params property.
-        Presumably those from a model fitting process.
-
-        """
-        data = self._asdict()
-
-        first = 0
-        for tf in self.tunable_fields:
-            last = first + np.size(data[tf])
-            data[tf] = parameters[first:last]
-            first = last
-
-        return UniStatModelParams(**data)
 
 
 class UniStatSystemModel:
