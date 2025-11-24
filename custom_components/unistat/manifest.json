@@ -7,6 +7,6 @@
   "documentation": "https://github.com/ngist/unistat",
   "integration_type": "helper",
   "iot_class": "calculated",
-  "requirements": ["control", "numpy"],
+  "requirements": ["control", "numpy", "scipy"],
   "version": "0.0.1-alpha.1"
 }
