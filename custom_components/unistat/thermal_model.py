@@ -132,7 +132,20 @@ class UniStatModelParams(NamedTuple):
     @property
     def self_consistent(self) -> bool:
         """Checks for self consistency of parameter sizes, does not check bounds"""
-        return True
+        interal_loads_consistent = self.internal_loads.shape == (
+            (self.num_rooms,) if self.estimate_internal_loads else (0,)
+        )
+        thermal_resistances_consistent = self.thermal_resistances.shape == (
+            np.sum(self.adjacency_matrix),
+        )
+
+        # TODO Implement more checks
+
+        return (
+            self.valid_adjacency
+            and interal_loads_consistent
+            and thermal_resistances_consistent
+        )
 
     @property
     def in_bounds(self) -> bool:

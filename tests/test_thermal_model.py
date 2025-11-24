@@ -127,8 +127,22 @@ class TestUniStatModelParams_OffNominal:
             np.array([[1, 1, 1], [0, 0, 1], [0, 0, 0]]),  # Has diagonal val
         ],
     )
-    def test_self_consistent_bad_adjacency(self, adjacency):
+    def test_valid_adjacency(self, adjacency):
         data = MODEL_PARAMS_FULL._asdict()
         data["adjacency_matrix"] = adjacency
         mp = UniStatModelParams(**data)
         assert not mp.valid_adjacency
+        assert not mp.self_consistent
+
+    @pytest.mark.parametrize(
+        "key,val",
+        [
+            ("internal_loads", np.array([0.1, 0.2, 0.3])),
+            ("thermal_resistances", np.array([1, 1.5])),
+        ],
+    )
+    def test_self_consistent(self, key, val):
+        data = MODEL_PARAMS_FULL._asdict()
+        data[key] = val
+        mp = UniStatModelParams(**data)
+        assert not mp.self_consistent
