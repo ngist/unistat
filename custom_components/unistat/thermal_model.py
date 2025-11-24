@@ -284,15 +284,6 @@ class UniStatSystemModel:
             thermal_lag=DEFAULT_THERMAL_LAG,
         )
 
-    # def update_parameters(thermal_lag= float | None = None,  )
-    #     if thermal_lag:
-    #         self.thermal_lag = thermal_lag
-
-    # def serialize_parameters(self) -> Dict[str,List|float|bool]:
-    #     """Returns state variables in a form that is easily serialized for storage."""
-
-    #     return p
-
     def _update_model(self):
         """Called after making updates to the model parameters to regenerate the model"""
         self._needs_update = True
