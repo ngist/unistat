@@ -65,16 +65,25 @@ MODEL_PARAMS_NO_BOILER = UniStatModelParams(
 )
 
 
+@pytest.mark.parametrize(
+    "input",
+    [
+        MODEL_PARAMS_MIN,
+        MODEL_PARAMS_NO_LOADS,
+        MODEL_PARAMS_NO_BOILER,
+        MODEL_PARAMS_FULL,
+    ],
+)
 class TestUniStatModelParams:
-    @pytest.mark.parametrize(
-        "input",
-        [
-            MODEL_PARAMS_MIN,
-            MODEL_PARAMS_NO_LOADS,
-            MODEL_PARAMS_NO_BOILER,
-            MODEL_PARAMS_FULL,
-        ],
-    )
     def test_tunable_params_roundtrip(self, input: UniStatModelParams):
         result = input.from_params(input.tunable_params)
         assert result == input
+
+    def test_bounds_shape(self, input: UniStatModelParams):
+        param_shape = input.tunable_params.shape
+        bounds_shape = input.param_bounds.shape
+        assert param_shape[0] == bounds_shape[0]
+        assert bounds_shape[1] == 2
+
+    def test_bounds_finite(self, input: UniStatModelParams):
+        assert np.all(np.isfinite(input.param_bounds))

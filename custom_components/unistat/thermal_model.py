@@ -1,7 +1,6 @@
 import control
 import numpy as np
 import numpy.typing as npt
-from scipy.optimize import Bounds
 
 from enum import Enum, auto
 from typing import Dict, List, Optional, NamedTuple, Tuple, Self
@@ -73,7 +72,7 @@ class UniStatModelParams(NamedTuple):
         ]
 
     @property
-    def bounds_map() -> Dict[str, Tuple[float, float]]:
+    def bounds_map(self) -> Dict[str, Tuple[float, float]]:
         return {
             "thermal_lag": (3600 * 0.25, 3600 * 12),
             "room_thermal_masses": (100, 10000),
@@ -95,11 +94,10 @@ class UniStatModelParams(NamedTuple):
         for tf in self.tunable_fields:
             parameters.append(data[tf])
 
-        print(parameters)
         return np.concat(parameters)
 
     @property
-    def param_bounds(self) -> Bounds:
+    def param_bounds(self) -> npt.NDArray:
         """Provide optimization bounds for tunable parameters"""
 
         data = self._asdict()
@@ -109,7 +107,7 @@ class UniStatModelParams(NamedTuple):
         for tf in self.tunable_fields:
             constraints_list.extend([bounds_map[tf]] * np.size(data[tf]))
 
-        return Bounds(*constraints_list)
+        return np.array(constraints_list)
 
     def from_params(self, parameters: npt.NDArray) -> Self:
         """Take in an array and return a new UniStatModelParams.
