@@ -71,14 +71,6 @@ async def test_setup_and_remove_config_entry(
         state = hass.states.get(eid)
         assert state.state == "off"
         expected_attributes = {**common_attribs, "friendly_name": friendly_name}
-        if eid == entity_ids[-1]:
-            expected_attributes.update(
-                {"humidity": 40, "max_humidity": 70, "min_humidity": 20}
-            )
-            expected_attributes["supported_features"] = (
-                common_attribs["supported_features"]
-                | ClimateEntityFeature.TARGET_HUMIDITY
-            )
         assert state.attributes == expected_attributes
 
     # Remove the config entry

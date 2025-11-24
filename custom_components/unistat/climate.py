@@ -8,13 +8,6 @@ from .const import (
     CONF_AREA,
     CONF_TEMP_ENTITY,
     CONF_HUMIDITY_ENTITY,
-    CONF_HEATING_CALL_ENTITY,
-    CONF_COOLING_CALL_ENTITY,
-    CONF_HUMIDIFY_CALL_ENTITY,
-    CONF_DEHUMIDIFY_CALL_ENTITY,
-    CONF_CLIMATE_ENTITY,
-    CONF_DEHUMIDIFICATION,
-    CONF_HUMIDIFICATION,
 )
 from homeassistant.components.climate import (
     ClimateEntity,
@@ -22,7 +15,6 @@ from homeassistant.components.climate import (
     ClimateEntityFeature,
     ATTR_PRESET_MODE,
     ATTR_TEMPERATURE,
-    ATTR_HUMIDITY,
     PRESET_NONE,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -99,19 +91,6 @@ async def async_setup_entry(
                 temp_unit=config_entry.data[CONF_TEMPERATURE_UNIT],
                 temperature_entity_id=room[CONF_TEMP_ENTITY],
                 humidity_entity_id=room.get(CONF_HUMIDITY_ENTITY, None),
-                heat_call_entity_id=room.get(CONF_HEATING_CALL_ENTITY, None),
-                cool_call_entity_id=room.get(CONF_COOLING_CALL_ENTITY, None),
-                humidify_call_entity_id=room[CONF_HUMIDIFICATION].get(
-                    CONF_HUMIDIFY_CALL_ENTITY, None
-                )
-                if CONF_HUMIDIFICATION in room
-                else None,
-                dehumidify_call_entity_id=room[CONF_DEHUMIDIFICATION].get(
-                    CONF_DEHUMIDIFY_CALL_ENTITY, None
-                )
-                if CONF_DEHUMIDIFICATION in room
-                else None,
-                climate_entity_id=room.get(CONF_CLIMATE_ENTITY, None),
                 presets=None,  # TODO add preset support
             )
         )
@@ -138,10 +117,6 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
         temp_unit: UnitOfTemperature,
         temperature_entity_id: str,
         humidity_entity_id: str | None = None,
-        heat_call_entity_id: str | None = None,
-        cool_call_entity_id: str | None = None,
-        humidify_call_entity_id: str | None = None,
-        dehumidify_call_entity_id: str | None = None,
         climate_entity_id: str | None = None,
         presets: Dict[str, Dict] | None = None,
     ) -> None:
@@ -168,14 +143,6 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
             self._attr_min_temp = 15
         self._attr_target_temperature_step = 1
 
-        self._has_humidity = humidity_entity_id and (
-            dehumidify_call_entity_id or humidify_call_entity_id
-        )
-        if self._has_humidity:
-            self._attr_min_humidity = 20
-            self._attr_max_humidity = 70
-            self._attr_supported_features |= ClimateEntityFeature.TARGET_HUMIDITY
-
         if presets:
             self._attr_supported_features |= ClimateEntityFeature.PRESET_MODE
             self._attr_preset_modes = [PRESET_NONE, *presets.keys()]
@@ -188,10 +155,6 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
         # UniStatClimateEntity specific members
         # Entities
         self._temperature_entity_id = temperature_entity_id
-        self._heat_call_entity_id = heat_call_entity_id
-        self._cool_call_entity_id = cool_call_entity_id
-        self._humidify_call_entity_id = humidify_call_entity_id
-        self._dehumidify_call_entity_id = dehumidify_call_entity_id
         self._climate_entity_id = climate_entity_id
         self._humidity_entity_id = humidity_entity_id
 
@@ -207,14 +170,12 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
                 self._async_temperature_changed,
             )
         )
-        if self._humidify_call_entity_id:
+        if self._humidity_entity_id:
             self.async_on_remove(
                 async_track_state_change_event(
                     self.hass, [self._humidity_entity_id], self._async_humidity_changed
                 )
             )
-
-        DEFAULT_HUMIDITY = 40
 
         def _default_temperature():
             return (
@@ -234,7 +195,7 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
                 self._async_update_temp(sensor_state)
                 self.async_write_ha_state()
 
-            if self._humidify_call_entity_id:
+            if self._humidity_entity_id:
                 sensor_state = self.hass.states.get(self._humidity_entity_id)
                 if sensor_state and sensor_state.state not in (
                     STATE_UNAVAILABLE,
@@ -263,17 +224,6 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
                     )
                 else:
                     self._target_temp = float(old_state.attributes[ATTR_TEMPERATURE])
-            if self._has_humidity and self._attr_target_humidity is None:
-                if old_state.attributes.get(ATTR_HUMIDITY) is None:
-                    self._attr_target_humidity = DEFAULT_HUMIDITY
-                    _LOGGER.warning(
-                        "Undefined target humidity, falling back to %s",
-                        self._attr_target_humidity,
-                    )
-                else:
-                    self._attr_target_humidity = float(
-                        old_state.attributes[ATTR_HUMIDITY]
-                    )
             if (
                 self.preset_modes
                 and old_state.attributes.get(ATTR_PRESET_MODE) in self.preset_modes
@@ -289,12 +239,6 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
                 _LOGGER.warning(
                     "No previously saved temperature, setting to %s",
                     self._attr_target_temperature,
-                )
-            if self._has_humidity and self._attr_target_humidity is None:
-                self._attr_target_humidity = DEFAULT_HUMIDITY
-                _LOGGER.warning(
-                    "No previously saved humidity, setting to %s",
-                    self._attr_target_humidity,
                 )
 
         # Set default state to off

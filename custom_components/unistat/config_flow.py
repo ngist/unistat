@@ -9,7 +9,11 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.utility_meter import DOMAIN as UTILITY_METER_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.const import (
     CONF_NAME,
     CONF_TEMPERATURE_UNIT,
@@ -401,3 +405,32 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 "area_reused": reused_area,
             },
         )
+
+
+class MyOptionsFlow(OptionsFlowWithReload):
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Invoked when a user initiates a flow via the user interface."""
+        if user_input is not None:
+            self.data = user_input
+            self.data["room_conf"] = []
+            self.added_temp_sensors = set()
+            self.added_humidity_sensors = set()
+            self.added_areas = set()
+            if CONF_OUTDOOR_SENSORS in user_input:
+                if CONF_TEMP_ENTITY in user_input[CONF_OUTDOOR_SENSORS]:
+                    self.added_temp_sensors.add(
+                        user_input[CONF_OUTDOOR_SENSORS][CONF_TEMP_ENTITY]
+                    )
+                if CONF_HUMIDITY_ENTITY in user_input[CONF_OUTDOOR_SENSORS]:
+                    self.added_humidity_sensors.add(
+                        user_input[CONF_OUTDOOR_SENSORS][CONF_HUMIDITY_ENTITY]
+                    )
+            self.data[CONF_ADJACENCY] = False  # TODO Remove once adjacency is supported
+            if self.data[CONF_BOILER]:
+                return await self.async_step_boiler()
+            # Return the form of the next step.
+            return await self.async_step_room()
+
+        return self.async_show_form(step_id="user", data_schema=MAIN_SCHEMA)
