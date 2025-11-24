@@ -30,7 +30,7 @@ class ThermalAppliance(NamedTuple):
 
 
 class UniStatModelParams(NamedTuple):
-    num_rooms: int
+    rooms: List[str]
     has_boiler: bool
     estimate_internal_loads: bool
     adjacency_matrix: npt.ArrayLike
@@ -44,6 +44,7 @@ class UniStatModelParams(NamedTuple):
     internal_loads: npt.ArrayLike
 
     def __eq__(self, value):
+        """Check for equivalence"""
         if not isinstance(value, (UniStatModelParams)):
             return False
         other = value._asdict()
@@ -109,6 +110,39 @@ class UniStatModelParams(NamedTuple):
 
         return np.array(constraints_list)
 
+    @property
+    def self_consistent(self) -> bool:
+        """Checks for self consistency of parameter sizes, does not check bounds"""
+        return True
+
+    @property
+    def in_bounds(self) -> bool:
+        """Checks that all parameters are within bounds"""
+        data = self._asdict()
+        bounds_map = self.bounds_map
+
+        for tf in self.tunable_fields:
+            if np.any((data[tf] < bounds_map[tf][0]) | (data[tf] > bounds_map[tf][1])):
+                print(f"{tf}: bound[{bounds_map[tf]}] data[{data[tf]}]")
+                return False
+        return True
+
+    @property
+    def num_rooms(self) -> int:
+        return len(self.rooms)
+
+    @property
+    def valid_adjacency(self) -> bool:
+        # Checks that an supplied adjacency matrix conforms to the expected form
+        return self.is_valid_adjacency(self.adjacency_matrix, self.num_rooms)
+
+    @staticmethod
+    def is_valid_adjacency(adjacency_matrix: npt.NDArray, num_rooms: int):
+        right_size = np.shape(adjacency_matrix) == (num_rooms + 1, num_rooms + 1)
+        ones_and_zeros = np.all((adjacency_matrix == 0) | (adjacency_matrix == 1))
+        upper_triangle = np.array_equal(np.triu(adjacency_matrix, 1), adjacency_matrix)
+        return ones_and_zeros and upper_triangle and right_size
+
     def from_params(self, parameters: npt.NDArray) -> Self:
         """Take in an array and return a new UniStatModelParams.
 
@@ -141,22 +175,8 @@ class UniStatSystemModel:
         self._update_model()
 
     @staticmethod
-    def valid_adjacency(
-        self, adjacency_matrix, num_rooms: Optional[int] = None
-    ) -> bool:
-        # Checks that an supplied adjacency matrix conforms to the expected form
-        right_size = (
-            np.shape(adjacency_matrix) == (num_rooms + 1, num_rooms + 1)
-            if num_rooms
-            else True
-        )
-        ones_and_zeros = np.all((adjacency_matrix == 0) | (adjacency_matrix == 1))
-        upper_triangle = np.array_equal(np.triu(adjacency_matrix, 1), adjacency_matrix)
-        return ones_and_zeros and upper_triangle and right_size
-
-    @staticmethod
     def initialize_state(
-        num_rooms: int,
+        rooms: List[str],
         room_conf: List[Dict[str, List[int]]],
         adjacency_matrix: Optional[List] = None,
         boiler_zone_entities: List[str] = None,
@@ -190,6 +210,7 @@ class UniStatSystemModel:
         # DEFAULT_HEATPUMP_HEATING = 4.22  # 14,400 BTU/hr
         # DEFAULT_CENTRAL_BOILER_HEAT = 41  # 140,000 BTU/hr
 
+        num_rooms = len(rooms)
         room_thermal_masses = np.ones(num_rooms) * DEFAULT_THERMAL_MASS
         boiler_thermal_masses = np.array([])
         if len(boiler_zone_entities) > 0:
@@ -238,7 +259,7 @@ class UniStatSystemModel:
         # # self.hvac_constants =
 
         return UniStatModelParams(
-            num_rooms=num_rooms,
+            rooms=rooms,
             has_boiler=has_boiler,
             estimate_internal_loads=estimate_internal_loads,
             adjacency_matrix=adjacency_matrix,
