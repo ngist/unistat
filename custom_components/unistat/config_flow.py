@@ -424,6 +424,8 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             # Return the form of the next step.
             if self.data[CONF_ADJACENCY]:
                 return await self.async_step_adjacency()
+            elif self.data[CONF_WEATHER_STATION]:
+                return await self.async_step_weather_station()
             return await self.async_step_room_sensors()
 
         return self.async_show_form(step_id="user", data_schema=MAIN_SCHEMA)
@@ -437,6 +439,9 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             # TODO Format adjacency better
             self.data["adjacency"] = user_input
             # Return the form of the next step.
+            if self.data[CONF_WEATHER_STATION]:
+                return await self.async_step_weather_station()
+
             return await self.async_step_room_sensors()
 
         schema, placeholders = gen_adjacency_schema(self.data[CONF_AREAS])
@@ -445,6 +450,21 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             step_id="adjacency",
             data_schema=schema,
             description_placeholders=placeholders,
+        )
+
+    async def async_step_weather_station(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure local weather station sensors."""
+        if user_input is not None:
+            # Input is valid, set data.
+            self.data["weather_station"] = user_input
+            # Return the form of the next step.
+            return await self.async_step_room_sensors()
+
+        return self.async_show_form(
+            step_id="weather_station",
+            data_schema=WEATHER_STATION_SCHEMA,
         )
 
     async def async_step_room_sensors(
