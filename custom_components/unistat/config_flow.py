@@ -1,6 +1,6 @@
 """Config flow for the UniStat integration."""
 
-from typing import Any, Tuple, Dict, List
+from typing import Any
 
 import voluptuous as vol
 
@@ -22,7 +22,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfPower,
 )
-from homeassistant.helpers import selector, NumberSelectorMode
+from homeassistant.helpers import selector
 from homeassistant.data_entry_flow import section
 
 from .const import (
@@ -64,7 +64,7 @@ MAIN_SCHEMA = vol.Schema(
         vol.Required(CONF_AREAS): selector.AreaSelector(
             selector.AreaSelectorConfig(multiple=True)
         ),
-        vol.Required(CONF_CONTROLS): selector.AreaSelector(
+        vol.Required(CONF_CONTROLS): selector.EntitySelector(
             selector.EntitySelectorConfig(
                 domain=[SWITCH_DOMAIN, CLIMATE_DOMAIN],
             )
@@ -97,7 +97,7 @@ MAIN_SCHEMA = vol.Schema(
         ): selector.EntitySelector(
             selector.EntitySelectorConfig(
                 domain=[SENSOR_DOMAIN, INPUT_NUMBER_DOMAIN],
-                device_class=[SensorDeviceClass.MONETARY, None],
+                # device_class=[SensorDeviceClass.MONETARY, None],
             )
         ),
         vol.Optional(
@@ -105,7 +105,7 @@ MAIN_SCHEMA = vol.Schema(
         ): selector.EntitySelector(
             selector.EntitySelectorConfig(
                 domain=SENSOR_DOMAIN,
-                device_class=[SensorDeviceClass.MONETARY, None],
+                # device_class=[SensorDeviceClass.MONETARY, None],
             )
         ),
         vol.Required(CONF_ADJACENCY, default=True): bool,
@@ -169,7 +169,7 @@ BASE_CENTRAL_APPLIANCE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_APPLIANCE_TYPE): selector.SelectSelector(
             selector.SelectSelectorConfig(
-                options=CentralApplianceType,
+                options=list(CentralApplianceType),
                 mode=selector.SelectSelectorMode.DROPDOWN,
             ),
         ),
@@ -181,136 +181,122 @@ BASE_CENTRAL_APPLIANCE_SCHEMA = vol.Schema(
     }
 )
 
-BASE_HEATING_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_HEATING_POWER): selector.NumberSelector(
-            {
-                "min": 0,
-                "mode": NumberSelectorMode.BOX,
-            }
-        ),
-    }
-)
+HEATING_SCHEMA = {
+    vol.Required(CONF_HEATING_POWER): selector.NumberSelector(
+        {
+            "min": 0,
+            "mode": selector.NumberSelectorMode.BOX,
+        }
+    ),
+}
 
-BASE_COOLING_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_COOLING_POWER): selector.NumberSelector(
-            {
-                "min": 0,
-                "mode": NumberSelectorMode.BOX,
-            }
-        ),
-    }
-)
+COOLING_SCHEMA = {
+    vol.Required(CONF_COOLING_POWER): selector.NumberSelector(
+        {
+            "min": 0,
+            "mode": selector.NumberSelectorMode.BOX,
+        }
+    ),
+}
 
-POWER_UNIT_SCHEMA = vol.Schema(
-    {
-        vol.Required(
-            CONF_UNIT_OF_MEASUREMENT,
-            default=UnitOfPower.BTU_PER_HOUR,
-        ): selector.SelectSelector(
-            selector.SelectSelectorConfig(
-                options=[UnitOfPower.BTU_PER_HOUR, UnitOfPower.WATT],
-                mode=selector.SelectSelectorMode.DROPDOWN,
-            ),
+POWER_UNIT_SCHEMA = {
+    vol.Required(
+        CONF_UNIT_OF_MEASUREMENT,
+        default=UnitOfPower.BTU_PER_HOUR,
+    ): selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=[UnitOfPower.BTU_PER_HOUR, UnitOfPower.WATT],
+            mode=selector.SelectSelectorMode.DROPDOWN,
         ),
-    }
-)
+    ),
+}
 
-METER_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_APPLIANCE_METER): selector.EntitySelector(
-            selector.EntitySelectorConfig(
-                domain=UTILITY_METER_DOMAIN,
-            )
-        ),
-    }
-)
+METER_SCHEMA = {
+    vol.Optional(CONF_APPLIANCE_METER): selector.EntitySelector(
+        selector.EntitySelectorConfig(
+            domain=UTILITY_METER_DOMAIN,
+        )
+    ),
+}
 
 BOILER_SCHEMA = (
-    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(BASE_HEATING_SCHEMA)
+    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(HEATING_SCHEMA)
     .extend(POWER_UNIT_SCHEMA)
     .extend(METER_SCHEMA)
     .extend(
-        vol.Schema(
-            {
-                vol.Optional(CONF_EFFICIENCY, default=80): selector.NumberSelector(
-                    {
-                        "min": 0,
-                        "max": 100,
-                        CONF_UNIT_OF_MEASUREMENT: "%",
-                        "mode": NumberSelectorMode.BOX,
-                    }
-                ),
-                vol.Optional(CONF_BOILER_INLET_TEMP_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=SENSOR_DOMAIN,
-                        device_class=SensorDeviceClass.TEMPERATURE,
-                    )
-                ),
-                vol.Optional(CONF_BOILER_OUTLET_TEMP_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=SENSOR_DOMAIN,
-                        device_class=SensorDeviceClass.TEMPERATURE,
-                    )
-                ),
-            }
-        )
+        {
+            vol.Optional(CONF_EFFICIENCY, default=80): selector.NumberSelector(
+                {
+                    "min": 0,
+                    "max": 100,
+                    CONF_UNIT_OF_MEASUREMENT: "%",
+                    "mode": selector.NumberSelectorMode.BOX,
+                }
+            ),
+            vol.Optional(CONF_BOILER_INLET_TEMP_ENTITY): selector.EntitySelector(
+                selector.EntitySelectorConfig(
+                    domain=SENSOR_DOMAIN,
+                    device_class=SensorDeviceClass.TEMPERATURE,
+                )
+            ),
+            vol.Optional(CONF_BOILER_OUTLET_TEMP_ENTITY): selector.EntitySelector(
+                selector.EntitySelectorConfig(
+                    domain=SENSOR_DOMAIN,
+                    device_class=SensorDeviceClass.TEMPERATURE,
+                )
+            ),
+        }
     )
 )
 
-SEER_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_SEER_RATING, default=15): selector.NumberSelector(
-            {
-                "min": 10,
-                "max": 30,
-                "mode": NumberSelectorMode.BOX,
-            }
+SEER_SCHEMA = {
+    vol.Optional(CONF_SEER_RATING, default=15): selector.NumberSelector(
+        {
+            "min": 10,
+            "max": 30,
+            "mode": selector.NumberSelectorMode.BOX,
+        }
+    ),
+    vol.Required(
+        CONF_SEER_STANDARD,
+        default="SEER",
+    ): selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=["SEER", "SEER2"],
+            mode=selector.SelectSelectorMode.DROPDOWN,
         ),
-        vol.Required(
-            CONF_SEER_STANDARD,
-            default="SEER",
-        ): selector.SelectSelector(
-            selector.SelectSelectorConfig(
-                options=["SEER", "SEER2"],
-                mode=selector.SelectSelectorMode.DROPDOWN,
-            ),
-        ),
-    }
-)
+    ),
+}
 
-HSPF_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_HSPF_RATING, default=15): selector.NumberSelector(
-            {
-                "min": 5,
-                "max": 15,
-                "mode": NumberSelectorMode.BOX,
-            }
+HSPF_SCHEMA = {
+    vol.Optional(CONF_HSPF_RATING, default=15): selector.NumberSelector(
+        {
+            "min": 5,
+            "max": 15,
+            "mode": selector.NumberSelectorMode.BOX,
+        }
+    ),
+    vol.Required(
+        CONF_HSPF_STANDARD,
+        default="HSPF",
+    ): selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=["HSPF", "HSPF2"],
+            mode=selector.SelectSelectorMode.DROPDOWN,
         ),
-        vol.Required(
-            CONF_HSPF_STANDARD,
-            default="HSPF",
-        ): selector.SelectSelector(
-            selector.SelectSelectorConfig(
-                options=["HSPF", "HSPF2"],
-                mode=selector.SelectSelectorMode.DROPDOWN,
-            ),
-        ),
-    }
-)
+    ),
+}
 
 COMPRESSOR_SCHEMA = (
-    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(BASE_COOLING_SCHEMA)
+    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(COOLING_SCHEMA)
     .extend(POWER_UNIT_SCHEMA)
     .extend(SEER_SCHEMA)
     .extend(METER_SCHEMA)
 )
 
 HEATPUMP_COMP_SCHEMA = (
-    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(BASE_COOLING_SCHEMA)
-    .extend(BASE_HEATING_SCHEMA)
+    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(COOLING_SCHEMA)
+    .extend(HEATING_SCHEMA)
     .extend(POWER_UNIT_SCHEMA)
     .extend(SEER_SCHEMA)
     .extend(HSPF_SCHEMA)
@@ -319,12 +305,13 @@ HEATPUMP_COMP_SCHEMA = (
 
 
 def gen_room_appliance_schema(entity_id: str) -> vol.Schema:
+    """Returns schema for room appliance the filters appliance types based on entity domain."""
     type_options = {
         SWITCH_DOMAIN: SWITCH_APPLIANCE_TYPES,
         CLIMATE_DOMAIN: CLIMATE_APPLIANCE_TYPES,
     }
     domain = entity_id.split(".", maxsplit=1)[0]
-    vol.Schema(
+    return vol.Schema(
         {
             vol.Required(CONF_APPLIANCE_TYPE): selector.SelectSelector(
                 selector.SelectSelectorConfig(
@@ -340,18 +327,22 @@ def gen_room_appliance_schema(entity_id: str) -> vol.Schema:
 
 
 WINDOW_AC_SCHEMA = (
-    BASE_COOLING_SCHEMA.extend(POWER_UNIT_SCHEMA)
+    vol.Schema(COOLING_SCHEMA)
+    .extend(POWER_UNIT_SCHEMA)
     .extend(SEER_SCHEMA)
     .extend(METER_SCHEMA)
 )
 WINDOW_HP_SCHEMA = (
-    BASE_COOLING_SCHEMA.extend(BASE_HEATING_SCHEMA)
+    vol.Schema(COOLING_SCHEMA)
+    .extend(HEATING_SCHEMA)
     .extend(POWER_UNIT_SCHEMA)
     .extend(SEER_SCHEMA)
     .extend(HSPF_SCHEMA)
     .extend(METER_SCHEMA)
 )
-SPACE_HEATER_SCHEMA = BASE_HEATING_SCHEMA.extend(POWER_UNIT_SCHEMA).extend(METER_SCHEMA)
+SPACE_HEATER_SCHEMA = (
+    vol.Schema(HEATING_SCHEMA).extend(POWER_UNIT_SCHEMA).extend(METER_SCHEMA)
+)
 
 APPLIANCE_SCHEMA_MAP = {
     ControlApplianceType.WindowAC: WINDOW_AC_SCHEMA,
@@ -369,24 +360,33 @@ CENTRAL_APPLIANCE_MAP = {
 }
 
 
-def gen_adjacency_schema(rooms) -> Tuple[vol.Schema, Dict[str, str]]:
+def gen_adjacency_schema(rooms) -> tuple[vol.Schema, dict[str, str]]:
     """Generates an adjacency matrix schema based on the number of rooms, and associated placeholder data."""
+    locations = ["Outside", *rooms]
+    placeholders = {f"room{i}": r for i, r in enumerate(locations)}
+    # placeholders = base_placeholders.copy()
+    # placeholders["sections"] = {}
+    # for i in range(len(locations)):
+    #     placeholders["sections"].update({f"room{i}": base_placeholders})
+
     schema = {}
-    for i, r in enumerate(rooms):
-        if len(rooms) - 1 != i:
+    for i, _ in enumerate(locations):
+        if len(locations) - 1 != i:
             sub_schema = {}
-            for x in rooms[i + 1 :]:
+            for x in locations[i + 1 :]:
                 sub_schema[vol.Required(x, default=True)] = bool
-            schema[vol.Required(r)] = section(sub_schema, options=None)
+            schema[vol.Required(f"room{i}")] = section(
+                vol.Schema(sub_schema), options=None
+            )
 
     schema = vol.Schema(schema)
-    placeholders = {f"room{i}": r for i, r in enumerate(rooms)}
 
     return schema, placeholders
 
 
-def gen_select_central_schema(central_appliances: List[str]) -> vol.Schema:
-    central_appliances = central_appliances + ["New"]
+def gen_select_central_schema(central_appliances: list[str]) -> vol.Schema:
+    """Dynamically generate a dropdown selecto for central appliances based on ones that have already been added."""
+    central_appliances = ["New", *central_appliances]
     return vol.Schema(
         {
             vol.Required("central_appliance", default="New"): selector.SelectSelector(
@@ -437,7 +437,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             # TODO Format adjacency better
             self.data["adjacency"] = user_input
             # Return the form of the next step.
-            return await self.async_step_room()
+            return await self.async_step_room_sensors()
 
         schema, placeholders = gen_adjacency_schema(self.data[CONF_AREAS])
 
@@ -510,7 +510,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Input is valid, set data.
             if user_input["central_appliance"] == "New":
-                return self.async_step_central_appliance()
+                return await self.async_step_central_appliance()
 
             self.data["room_appliances"][self.this_appliance].update(user_input)
 
@@ -542,7 +542,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             )
             self.data["central_appliances"][user_input[CONF_NAME]] = user_input
             if user_input[CONF_NAME] == "New":
-                return self.async_step_central_appliance()
+                return await self.async_step_central_appliance()
 
             if self.room_appliance_index == len(self.data[CONF_CONTROLS]):
                 return self.async_create_entry(
