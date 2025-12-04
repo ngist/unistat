@@ -42,6 +42,7 @@ class UniStatModelParams(NamedTuple):
     radiator_constants: npt.ArrayLike
     boiler_thermal_masses: npt.ArrayLike
     internal_loads: npt.ArrayLike
+    temp_variance: npt.ArrayLike
 
     def from_params(self, parameters: npt.NDArray) -> Self:
         """Take in an array and return a new UniStatModelParams.
@@ -88,6 +89,7 @@ class UniStatModelParams(NamedTuple):
             "boiler_thermal_masses",
             "radiator_constants",
             "internal_loads",
+            "temp_variance",
         ]
 
     @property
@@ -102,6 +104,7 @@ class UniStatModelParams(NamedTuple):
             "cooling_outputs": (-10, -0.25),
             "internal_loads": (0, 1),
             "radiator_constants": (0.001, 1),
+            "temp_variance": (0, 3),
         }
 
     @property
@@ -226,6 +229,7 @@ class UniStatSystemModel:
         # DEFAULT_CENTRAL_BOILER_HEAT = 41  # 140,000 BTU/hr
 
         num_rooms = len(rooms)
+        temp_variance = np.zeros(num_rooms)
         room_thermal_masses = np.ones(num_rooms) * DEFAULT_THERMAL_MASS
         boiler_thermal_masses = np.array([])
         if len(boiler_zone_entities) > 0:
@@ -281,6 +285,7 @@ class UniStatSystemModel:
             room_thermal_masses=room_thermal_masses,
             boiler_thermal_masses=boiler_thermal_masses,
             internal_loads=internal_loads,
+            temp_variance=temp_variance,
             thermal_lag=DEFAULT_THERMAL_LAG,
         )
 

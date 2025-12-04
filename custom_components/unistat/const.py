@@ -7,37 +7,34 @@ DOMAIN = "unistat"
 # General Purpose (used multiple forms)
 CONF_TEMP_ENTITY = "temp_entity"
 CONF_HUMIDITY_ENTITY = "humidity_entity"
-CONF_CLIMATE_ENTITY = "climate_entity"
 
 # Main Settings
+CONF_CONTROLS = "climate_controls"
+CONF_AREAS = "areas"
 CONF_CONTROL_MODE = "control_mode"
-CONF_NUM_ROOMS = "num_rooms"
+CONF_WEATHER_ENTITY = "weather_entity"
 CONF_ADJACENCY = "use_adjacency"
-CONF_BOILER = "has_boiler"
+CONF_WEATHER_STATION = "use_weather_station"
 CONF_WIND_SPEED_ENTITY = "wind_speed_entity"
 CONF_WIND_DIRECTION_ENTITY = "wind_direction_entity"
 CONF_SOLAR_FLUX_ENTITY = "solar_flux_entity"
-CONF_OUTDOOR_SENSORS = "outdoor_sensors"
+CONF_GAS_PRICE_ENTITY = "gas_price_entity"
+CONF_ELECTRIC_PRICE_ENTITY = "electric_price_entity"
 
-# Room Specific Settings
-CONF_AREA = "area"
-CONF_HEATING_CALL_ENTITY = "heat_call_entity"
-CONF_COOLING_CALL_ENTITY = "cooling_call_entity"
-CONF_DEHUMIDIFY_CALL_ENTITY = "dehumidify_call_entity"
-CONF_HUMIDIFY_CALL_ENTITY = "humidify_call_entity"
-CONF_HEATING = "heating"
-CONF_COOLING = "cooling"
-CONF_HUMIDIFICATION = "humidification"
-CONF_DEHUMIDIFICATION = "dehumidification"
+# Appliance settings
+CONF_APPLIANCE_TYPE = "appliance_type"
+CONF_HEATING_POWER = "heating_power"
+CONF_COOLING_POWER = "cooling_power"
+CONF_APPLIANCE_METER = "appliance_meter"
+CONF_SEER_RATING = "seer_rating"
+CONF_SEER_STANDARD = "seer_version"
+CONF_HSPF_RATING = "hspf_rating"
+CONF_HSPF_STANDARD = "hspf_version"
+CONF_EFFICIENCY = "efficiency"
 
 # Boiler Specific Settings
-CONF_BOILER_BTUH = "boiler_btuh"
-CONF_BOILER_METER = "boiler_meter"
-CONF_BOILER_UNIT_COST = "boiler_unit_cost"
 CONF_BOILER_INLET_TEMP_ENTITY = "boiler_inlet_temp"
 CONF_BOILER_OUTLET_TEMP_ENTITY = "boiler_outlet_temp"
-
-SERVICE_ADD_ROOM = "add_room"
 
 
 class ControlMode(StrEnum):
@@ -46,3 +43,40 @@ class ControlMode(StrEnum):
     COMFORT = "Comfort"
     ECO = "Eco"
     BUDGET = "Budget"
+
+
+class CentralApplianceType(StrEnum):
+    """Appliance Types."""
+
+    HydroBoiler = "HydroBoiler"
+    HvacFurnace = "HVACFurnace"
+    AcCompressor = "AcCompressor"
+    HeatpumpCompressor = "HeatpumpCompressor"
+
+
+class ControlApplianceType(StrEnum):
+    """Appliance Types."""
+
+    HeatpumpFanUnit = "HeatpumpFanUnit"
+    BoilerZoneValve = "BoilerZoneValve"
+    ThermoStaticRadiatorValve = "ThermoStaticRadiatorValve"
+    HVACThermostat = "HVACThermostat"
+    HVACHeatCall = "HVACHeatCall"
+    HVACCoolCall = "HVACCoolCall"
+    SpaceHeater = "SpaceHeater"
+    WindowAC = "WindowAC"
+    WindowHeatpump = "WindowHeatpump"
+
+
+SWITCH_APPLIANCE_TYPES = [
+    ControlApplianceType.BoilerZoneValve,
+    ControlApplianceType.HVACCoolCall,
+    ControlApplianceType.HVACHeatCall,
+    ControlApplianceType.SpaceHeater,
+    ControlApplianceType.WindowAC,
+]
+CLIMATE_APPLIANCE_TYPES = [
+    ControlApplianceType.HVACThermostat,
+    ControlApplianceType.HeatpumpFanUnit,
+    ControlApplianceType.WindowHeatpump,
+]

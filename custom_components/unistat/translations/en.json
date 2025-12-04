@@ -3,110 +3,96 @@
     "step": {
       "user": {
         "title": "New UniStat",
-        "description": "UniStat Settings",
+        "description": "Main UniStat Settings",
         "data": {
           "name": "Name",
-          "num_rooms": "Rooms to control",
+          "areas": "Rooms",
+          "climate_controls": "Climate Controls",
+          "weather_entity": "Weather Entity",
           "control_mode": "Control Mode",
           "temperature_unit": "Temperature Unit",
-          "use_adjacency": "Use Room Adjacency?",
-          "has_boiler": "Has Boiler?"
-        },
-        "sections": {
-          "outdoor_sensors": {
-            "name": "Outdoor Sensors(Optional)",
-            "description": "These sensors may improve performance",
-            "data": {
-              "temp_entity": "Temperature Sensor",
-              "humidity_entity": "Humidity Sensor",
-              "wind_speed_entity": "Wind Speed Sensor",
-              "wind_direction_entity": "Wind Direction Sensor",
-              "solar_flux_entity": "Solar Flux Sensor"
-            }
-          }
+          "gas_price_entity": "Gas Price Entity",
+          "electric_price_entity": "Electricity Price Entity",
+          "use_adjacency": "Specify room adjacency?",
+          "use_weather_station": "Use local weather station?"
         }
       },
-      "room": {
-        "title": "Room Setup",
-        "description": "Configure heating/cooling entities for room",
+      "adjacency": {
+        "title": "Configure Room Adjacency",
+        "description": "By default all rooms are assumed to be adjacent to each other and the outside. The control model includes a parameter for thermal resistance between all adjacent areas, while the model should learn that there is no direct heat path between non-adjacent rooms and set this parameter to a very large number, explicitly eliminating adjacency helps to reduce the number of model parameters and should help improve model stability and fitting.",
         "data": {
-          "area": "Area",
+          "room1": "{room1}",
+          "room2": "{room2}",
+          "room3": "{room3}",
+          "room4": "{room4}",
+          "room5": "{room5}",
+          "room6": "{room6}",
+          "room7": "{room7}",
+          "room8": "{room8}",
+          "room9": "{room9}",
+          "room10": "{room10}",
+          "room11": "{room11}",
+          "room12": "{room12}",
+          "room13": "{room13}",
+          "room14": "{room14}",
+          "room15": "{room15}",
+          "room16": "{room16}",
+          "room17": "{room17}",
+          "room18": "{room18}",
+          "room19": "{room19}",
+          "room20": "{room20}",
+          "room21": "{room21}",
+          "room22": "{room22}",
+          "room23": "{room23}",
+          "room24": "{room24}",
+          "room25": "{room25}"
+        }
+      },
+      "room_sensors": {
+        "title": "Room Sensor Setup",
+        "description": "Configure sensors for {room}",
+        "data": {
           "temp_entity": "Temperature Sensor",
           "humidity_entity": "Humidity Sensor"
-        },
-        "sections": {
-          "heating": {
-            "name": "Heating Controls",
-            "description": "Climate entities can be reused in cooling, etc if they support those features.",
-            "data": {
-              "heat_call_entity": "Heating Call",
-              "climate_entity": "Climate Control Entity"
-            }
-          },
-          "cooling": {
-            "name": "Cooling Controls",
-            "description": "Climate entities can be reused in heating, etc if they support those features.",
-            "data": {
-              "cooling_call_entity": "Cooling Call",
-              "climate_entity": "Climate Control Entity"
-            }
-          },
-          "humidification": {
-            "name": "Humidification Controls",
-            "description": "Climate entities can be reused in heating, etc if they support those features.",
-            "data": {
-              "humidify_call_entity": "Humidify Call",
-              "climate_entity": "Climate Control Entity"
-            }
-          },
-          "dehumidification": {
-            "name": "Dehumidification Controls",
-            "description": "Climate entities can be reused in heating, etc if they support those features.",
-            "data": {
-              "dehumidify_call_entity": "Dehumidify Call",
-              "climate_entity": "Climate Control Entity"
-            }
-          }
         }
       },
-      "boiler": {
-        "title": "Boiler Setup",
+      "room_appliance_1": {
+        "title": "Heating/Cooling control setup: Step1",
+        "description": "Configuration for {appliance}",
         "data": {
-          "heat_call_entity": "Boiler zone controls(Input All)",
-          "area": "Areas heated on any heat call"
-        },
-        "sections": {
-          "energy_settings": {
-            "name": "Energy Settings(optional)",
-            "description": "These settings are only used in Eco Mode or Budget Mode, if an energy meter is specified it needs to be one that exclusively measures the boiler, if you don't have such a meter is better to leave this blank than to use your main utility meter, energy use will be estimated based on the BTUH rating.",
-            "data": {
-              "boiler_btuh": "BTUH Rating",
-              "boiler_unit_cost": "Unit Cost",
-              "boiler_meter": "Utility Meter(boiler only)"
-            }
-          },
-          "temp_sensors": {
-            "name": "Temp Sensors(optional)",
-            "description": "Specifying one or both of these will help the system better estimate heatflow to each zone and help reduce temperature ripple.",
-            "data": {
-              "boiler_inlet_temp": "Inlet Temp",
-              "boiler_outlet_temp": "Outlet Temp"
-            }
-          }
+          "appliance_type": "Appliance Type",
+          "area": "Areas directly affected(specify all)"
         }
-      }
-    },
-    "error": {
-      "temp_sensor_reused": "Temperature sensor {temp_reused} cannot be reused.",
-      "humidity_sensor_reused": "Humidity sensor {humidity_reused} cannot be reused.",
-      "area_reused": "Area {area_reused} cannot be reused."
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
+      },
+      "room_appliance_2": {
+        "title": "Heating/Cooling control setup: Step2",
+        "description": "Configuration for {appliance}",
         "data": {
-          "entity_id": "[%key:component::unistat::config::step::user::description%]"
+          "central_appliance": "Associated Central Appliance",
+          "cooling_power": "Cooling Power",
+          "heating_power": "Heating Power",
+          "unit_of_measurement": "Heating/Cooling Power Units",
+          "seer_rating": "SEER or SEER2 Rating",
+          "seer_standard": "Rating version",
+          "hspf_rating": "HSPF or HSPF2 Rating",
+          "hspf_standard": "Rating version",
+          "appliance_meter": "Appliance Utility Meter(if available)"
+        }
+      },
+      "central_appliance": {
+        "title": "Add new central appliance associated with {appliance}",
+        "description": "Input the heating and cooling characteristics of the ",
+        "data": {
+          "name": "Central Appliance Name",
+          "central_appliance": "Associated Central Appliance",
+          "cooling_power": "Cooling Power",
+          "heating_power": "Heating Power",
+          "unit_of_measurement": "Heating/Cooling Power Units",
+          "seer_rating": "SEER or SEER2 Rating",
+          "seer_standard": "Rating version",
+          "hspf_rating": "HSPF or HSPF2 Rating",
+          "hspf_standard": "Rating version",
+          "appliance_meter": "Appliance Utility Meter(if available)"
         }
       }
     }
