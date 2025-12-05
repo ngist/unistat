@@ -2,7 +2,6 @@
 
 import logging
 from typing import List
-import voluptuous as vol
 from datetime import timedelta
 from .climate import UniStatClimateEntity
 from .const import (
@@ -20,15 +19,12 @@ from .const import (
     CONF_BOILER_METER,
     CONF_BOILER_INLET_TEMP_ENTITY,
     CONF_OUTDOOR_SENSORS,
-    SERVICE_ADD_ROOM,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
     CONF_TEMPERATURE_UNIT,
     EVENT_HOMEASSISTANT_START,
-    SERVICE_SAVE_PERSISTENT_STATES,
-    SERVICE_RELOAD,
     UnitOfTemperature,
 )
 from homeassistant.core import (
@@ -57,21 +53,21 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     )
     await component.async_setup(config)
 
-    component.async_register_entity_service(
-        SERVICE_SAVE_PERSISTENT_STATES,
-        None,
-        "async_save_persistent_states",
-    )
-    component.async_register_entity_service(
-        SERVICE_RELOAD,
-        None,
-        "async_reload",
-    )
-    component.async_register_entity_service(
-        SERVICE_ADD_ROOM,
-        vol.Schema({vol.Required("unistat_climate"): UniStatClimateEntity}),
-        "async_add_room",
-    )
+    # component.async_register_entity_service(
+    #     SERVICE_SAVE_PERSISTENT_STATES,
+    #     None,
+    #     "async_save_persistent_states",
+    # )
+    # component.async_register_entity_service(
+    #     SERVICE_RELOAD,
+    #     None,
+    #     "async_reload",
+    # )
+    # component.async_register_entity_service(
+    #     SERVICE_ADD_ROOM,
+    #     vol.Schema({vol.Required("unistat_climate"): UniStatClimateEntity}),
+    #     "async_add_room",
+    # )
 
     return True
 
