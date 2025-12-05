@@ -17,6 +17,7 @@ MODEL_PARAMS_MIN = UniStatModelParams(
     boiler_thermal_masses=np.array([]),
     radiator_constants=np.array([]),
     internal_loads=np.array([]),
+    temp_variance=np.array([0.1, 0.2]),
 )
 
 MODEL_PARAMS_FULL = UniStatModelParams(
@@ -32,6 +33,7 @@ MODEL_PARAMS_FULL = UniStatModelParams(
     boiler_thermal_masses=np.array([100, 101]),
     radiator_constants=np.array([0.1, 0.2]),
     internal_loads=np.array([0.3, 0.5]),
+    temp_variance=np.array([0.1, 0.2]),
 )
 
 MODEL_PARAMS_NO_LOADS = UniStatModelParams(
@@ -47,6 +49,7 @@ MODEL_PARAMS_NO_LOADS = UniStatModelParams(
     boiler_thermal_masses=np.array([100, 101]),
     radiator_constants=np.array([0.1, 0.2]),
     internal_loads=np.array([]),
+    temp_variance=np.array([0.1, 0.2]),
 )
 
 MODEL_PARAMS_NO_BOILER = UniStatModelParams(
@@ -62,6 +65,7 @@ MODEL_PARAMS_NO_BOILER = UniStatModelParams(
     boiler_thermal_masses=np.array([]),
     radiator_constants=np.array([]),
     internal_loads=np.array([0.3, 0.5]),
+    temp_variance=np.array([0.1, 0.2]),
 )
 
 

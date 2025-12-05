@@ -1,14 +1,7 @@
 """Test the UniStat integration."""
 
-from .constants import (
-    MAIN_SETTINGS_MAXIMAL,
-    BOILER_SETTINGS_MAXIMAL,
-    ROOM_1_SETTINGS,
-    ROOM_2_SETTINGS,
-    ROOM_3_SETTINGS,
-)
 from custom_components.unistat.const import (
-    CONF_AREA,
+    CONF_AREAS,
     DOMAIN,
 )
 import pytest
@@ -18,22 +11,28 @@ from homeassistant.components.climate import ClimateEntityFeature, HVACMode
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
+PLATFORMS = ["climate"]
 
-@pytest.mark.parametrize("platform", ["climate"])
+
+@pytest.mark.parametrize("platform", PLATFORMS)
+@pytest.mark.usefixtures(
+    "main_maximal", "room_sensors_w_humidity", "spaceheaters_expected"
+)
 async def test_setup_and_remove_config_entry(
     hass: HomeAssistant,
     entity_registry: er.EntityRegistry,
     platform: str,
+    main_maximal,
+    room_sensors_w_humidity,
+    spaceheaters_expected,
 ) -> None:
     """Test setting up and removing a config entry."""
-    data = MAIN_SETTINGS_MAXIMAL.copy()
-    data["room_conf"] = [ROOM_1_SETTINGS, ROOM_2_SETTINGS, ROOM_3_SETTINGS]
-    data["boiler_conf"] = BOILER_SETTINGS_MAXIMAL
+    data = main_maximal
+    data["room_sensors"] = room_sensors_w_humidity
+    data["room_appliances"] = spaceheaters_expected
 
-    entity_ids = [
-        f"{platform}.my_unistat_{room[CONF_AREA]}" for room in data["room_conf"]
-    ]
-    friendly_names = [f"My UniStat {room[CONF_AREA]}" for room in data["room_conf"]]
+    entity_ids = [f"{platform}.my_unistat_{room}" for room in data[CONF_AREAS]]
+    friendly_names = [f"My UniStat {room}" for room in data[CONF_AREAS]]
     # Setup the config entry
     config_entry = MockConfigEntry(
         data=data,

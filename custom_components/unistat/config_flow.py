@@ -66,7 +66,7 @@ MAIN_SCHEMA = vol.Schema(
         ),
         vol.Required(CONF_CONTROLS): selector.EntitySelector(
             selector.EntitySelectorConfig(
-                domain=[SWITCH_DOMAIN, CLIMATE_DOMAIN],
+                domain=[SWITCH_DOMAIN, CLIMATE_DOMAIN], multiple=True
             )
         ),
         vol.Required(CONF_WEATHER_ENTITY): selector.EntitySelector(
@@ -165,21 +165,9 @@ ROOM_SCHEMA = vol.Schema(
     }
 )
 
-BASE_CENTRAL_APPLIANCE_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_APPLIANCE_TYPE): selector.SelectSelector(
-            selector.SelectSelectorConfig(
-                options=list(CentralApplianceType),
-                mode=selector.SelectSelectorMode.DROPDOWN,
-            ),
-        ),
-        vol.Optional(CONF_APPLIANCE_METER): selector.EntitySelector(
-            selector.EntitySelectorConfig(
-                domain=UTILITY_METER_DOMAIN,
-            )
-        ),
-    }
-)
+NAME_SCHEMA = {
+    vol.Required(CONF_NAME): selector.TextSelector(),
+}
 
 HEATING_SCHEMA = {
     vol.Required(CONF_HEATING_POWER): selector.NumberSelector(
@@ -205,7 +193,7 @@ POWER_UNIT_SCHEMA = {
         default=UnitOfPower.BTU_PER_HOUR,
     ): selector.SelectSelector(
         selector.SelectSelectorConfig(
-            options=[UnitOfPower.BTU_PER_HOUR, UnitOfPower.WATT],
+            options=[UnitOfPower.BTU_PER_HOUR, UnitOfPower.KILO_WATT, UnitOfPower.WATT],
             mode=selector.SelectSelectorMode.DROPDOWN,
         ),
     ),
@@ -218,36 +206,6 @@ METER_SCHEMA = {
         )
     ),
 }
-
-BOILER_SCHEMA = (
-    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(HEATING_SCHEMA)
-    .extend(POWER_UNIT_SCHEMA)
-    .extend(METER_SCHEMA)
-    .extend(
-        {
-            vol.Optional(CONF_EFFICIENCY, default=80): selector.NumberSelector(
-                {
-                    "min": 0,
-                    "max": 100,
-                    CONF_UNIT_OF_MEASUREMENT: "%",
-                    "mode": selector.NumberSelectorMode.BOX,
-                }
-            ),
-            vol.Optional(CONF_BOILER_INLET_TEMP_ENTITY): selector.EntitySelector(
-                selector.EntitySelectorConfig(
-                    domain=SENSOR_DOMAIN,
-                    device_class=SensorDeviceClass.TEMPERATURE,
-                )
-            ),
-            vol.Optional(CONF_BOILER_OUTLET_TEMP_ENTITY): selector.EntitySelector(
-                selector.EntitySelectorConfig(
-                    domain=SENSOR_DOMAIN,
-                    device_class=SensorDeviceClass.TEMPERATURE,
-                )
-            ),
-        }
-    )
-)
 
 SEER_SCHEMA = {
     vol.Optional(CONF_SEER_RATING, default=15): selector.NumberSelector(
@@ -287,20 +245,78 @@ HSPF_SCHEMA = {
     ),
 }
 
+FURNACE_SCHEMA = (
+    vol.Schema(NAME_SCHEMA)
+    .extend(HEATING_SCHEMA)
+    .extend(POWER_UNIT_SCHEMA)
+    .extend(METER_SCHEMA)
+    .extend(
+        {
+            vol.Optional(CONF_EFFICIENCY, default=80): selector.NumberSelector(
+                {
+                    "min": 0,
+                    "max": 100,
+                    CONF_UNIT_OF_MEASUREMENT: "%",
+                    "mode": selector.NumberSelectorMode.BOX,
+                }
+            ),
+        }
+    )
+)
+
+BOILER_SCHEMA = FURNACE_SCHEMA.extend(
+    {
+        vol.Optional(CONF_BOILER_INLET_TEMP_ENTITY): selector.EntitySelector(
+            selector.EntitySelectorConfig(
+                domain=SENSOR_DOMAIN,
+                device_class=SensorDeviceClass.TEMPERATURE,
+            )
+        ),
+        vol.Optional(CONF_BOILER_OUTLET_TEMP_ENTITY): selector.EntitySelector(
+            selector.EntitySelectorConfig(
+                domain=SENSOR_DOMAIN,
+                device_class=SensorDeviceClass.TEMPERATURE,
+            )
+        ),
+    }
+)
+
 COMPRESSOR_SCHEMA = (
-    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(COOLING_SCHEMA)
+    vol.Schema(NAME_SCHEMA)
+    .extend(HEATING_SCHEMA)
+    .extend(COOLING_SCHEMA)
     .extend(POWER_UNIT_SCHEMA)
     .extend(SEER_SCHEMA)
     .extend(METER_SCHEMA)
 )
 
 HEATPUMP_COMP_SCHEMA = (
-    BASE_CENTRAL_APPLIANCE_SCHEMA.extend(COOLING_SCHEMA)
+    vol.Schema(NAME_SCHEMA)
+    .extend(HEATING_SCHEMA)
+    .extend(COOLING_SCHEMA)
     .extend(HEATING_SCHEMA)
     .extend(POWER_UNIT_SCHEMA)
     .extend(SEER_SCHEMA)
     .extend(HSPF_SCHEMA)
     .extend(METER_SCHEMA)
+)
+
+WINDOW_AC_SCHEMA = (
+    vol.Schema(COOLING_SCHEMA)
+    .extend(POWER_UNIT_SCHEMA)
+    .extend(SEER_SCHEMA)
+    .extend(METER_SCHEMA)
+)
+WINDOW_HP_SCHEMA = (
+    vol.Schema(COOLING_SCHEMA)
+    .extend(HEATING_SCHEMA)
+    .extend(POWER_UNIT_SCHEMA)
+    .extend(SEER_SCHEMA)
+    .extend(HSPF_SCHEMA)
+    .extend(METER_SCHEMA)
+)
+SPACE_HEATER_SCHEMA = (
+    vol.Schema(HEATING_SCHEMA).extend(POWER_UNIT_SCHEMA).extend(METER_SCHEMA)
 )
 
 
@@ -326,37 +342,26 @@ def gen_room_appliance_schema(entity_id: str) -> vol.Schema:
     )
 
 
-WINDOW_AC_SCHEMA = (
-    vol.Schema(COOLING_SCHEMA)
-    .extend(POWER_UNIT_SCHEMA)
-    .extend(SEER_SCHEMA)
-    .extend(METER_SCHEMA)
-)
-WINDOW_HP_SCHEMA = (
-    vol.Schema(COOLING_SCHEMA)
-    .extend(HEATING_SCHEMA)
-    .extend(POWER_UNIT_SCHEMA)
-    .extend(SEER_SCHEMA)
-    .extend(HSPF_SCHEMA)
-    .extend(METER_SCHEMA)
-)
-SPACE_HEATER_SCHEMA = (
-    vol.Schema(HEATING_SCHEMA).extend(POWER_UNIT_SCHEMA).extend(METER_SCHEMA)
-)
-
 APPLIANCE_SCHEMA_MAP = {
     ControlApplianceType.WindowAC: WINDOW_AC_SCHEMA,
     ControlApplianceType.WindowHeatpump: WINDOW_HP_SCHEMA,
     ControlApplianceType.SpaceHeater: SPACE_HEATER_SCHEMA,
 }
 
+A2C_MAP = {
+    ControlApplianceType.BoilerZoneValve: CentralApplianceType.HydroBoiler,
+    ControlApplianceType.ThermoStaticRadiatorValve: CentralApplianceType.HydroBoiler,
+    ControlApplianceType.HVACCoolCall: CentralApplianceType.AcCompressor,
+    ControlApplianceType.HVACHeatCall: CentralApplianceType.HvacFurnace,
+    ControlApplianceType.HVACThermostat: CentralApplianceType.HeatpumpCompressor,
+    ControlApplianceType.HeatpumpFanUnit: CentralApplianceType.HeatpumpCompressor,
+}
+
 CENTRAL_APPLIANCE_MAP = {
-    ControlApplianceType.BoilerZoneValve: BOILER_SCHEMA,
-    ControlApplianceType.HVACCoolCall: None,
-    ControlApplianceType.HVACHeatCall: None,
-    ControlApplianceType.HVACThermostat: None,
-    ControlApplianceType.HeatpumpFanUnit: HEATPUMP_COMP_SCHEMA,
-    ControlApplianceType.ThermoStaticRadiatorValve: BOILER_SCHEMA,
+    CentralApplianceType.HydroBoiler: BOILER_SCHEMA,
+    CentralApplianceType.AcCompressor: COMPRESSOR_SCHEMA,
+    CentralApplianceType.HvacFurnace: FURNACE_SCHEMA,
+    CentralApplianceType.HeatpumpCompressor: HEATPUMP_COMP_SCHEMA,
 }
 
 
@@ -479,7 +484,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             # Input is valid, set data.
             self.data["room_sensors"][this_room] = user_input
 
-            if room_index == len(self.data[CONF_AREAS]):
+            if room_index + 1 == len(self.data[CONF_AREAS]):
                 # Room sensors done move onto appliances
                 return await self.async_step_room_appliance_1()
 
@@ -499,7 +504,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Captures configuration of a room appliance."""
 
-        self.room_appliance_index = len(self.data["room_appliances"])
+        self.room_appliance_index = len(self.data["room_appliances"].keys())
         self.this_appliance = self.data[CONF_CONTROLS][self.room_appliance_index]
 
         if user_input is not None:
@@ -529,12 +534,15 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             # Input is valid, set data.
-            if user_input["central_appliance"] == "New":
+            if (
+                "central_appliance" in user_input
+                and user_input["central_appliance"] == "New"
+            ):
                 return await self.async_step_central_appliance()
 
             self.data["room_appliances"][self.this_appliance].update(user_input)
 
-            if self.room_appliance_index == len(self.data[CONF_CONTROLS]):
+            if self.room_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
                 return self.async_create_entry(
                     title=self.data[CONF_NAME], data=self.data
                 )
@@ -560,11 +568,10 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             self.data["room_appliances"][self.this_appliance]["central_appliance"] = (
                 user_input[CONF_NAME]
             )
+            user_input["appliance_type"] = A2C_MAP[self.appliance_type]
             self.data["central_appliances"][user_input[CONF_NAME]] = user_input
-            if user_input[CONF_NAME] == "New":
-                return await self.async_step_central_appliance()
 
-            if self.room_appliance_index == len(self.data[CONF_CONTROLS]):
+            if self.room_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
                 return self.async_create_entry(
                     title=self.data[CONF_NAME], data=self.data
                 )
@@ -574,7 +581,11 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="central_appliance",
-            data_schema=CENTRAL_APPLIANCE_MAP[self.appliance_type],
+            data_schema=CENTRAL_APPLIANCE_MAP[A2C_MAP[self.appliance_type]],
+            description_placeholders={
+                "appliance": self.this_appliance,
+                "central_appliance": str(A2C_MAP[self.appliance_type]),
+            },
         )
 
 

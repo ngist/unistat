@@ -5,7 +5,6 @@ from typing import Dict
 
 
 from .const import (
-    CONF_AREA,
     CONF_TEMP_ENTITY,
     CONF_HUMIDITY_ENTITY,
 )
@@ -71,17 +70,19 @@ async def async_setup_entry(
     registry = er.async_get(hass)
     # Validate + resolve entity registry id to entity_id
     climate_entities = []
-    for room in config_entry.data["room_conf"]:
+    for room in config_entry.data["room_sensors"]:
         base_name = config_entry.data[CONF_NAME]
         _LOGGER.info(
             "Configuring thermostat UI for %s",
-            room[CONF_AREA],
+            room,
         )
-        name = f"{base_name} {room[CONF_AREA]}"
+        name = f"{base_name} {room}"
         entity_id = er.async_validate_entity_id(
             registry, format_entity_id(f"climate.{name}")
         )
-        unique_id = f"{config_entry.entry_id}_{room[CONF_AREA]}"
+        unique_id = f"{config_entry.entry_id}_{room}"
+
+        room_sensors = config_entry.data["room_sensors"][room]
         climate_entities.append(
             UniStatClimateEntity(
                 hass,
@@ -89,8 +90,8 @@ async def async_setup_entry(
                 name=name,
                 wrapped_entity_id=entity_id,
                 temp_unit=config_entry.data[CONF_TEMPERATURE_UNIT],
-                temperature_entity_id=room[CONF_TEMP_ENTITY],
-                humidity_entity_id=room.get(CONF_HUMIDITY_ENTITY, None),
+                temperature_entity_id=room_sensors[CONF_TEMP_ENTITY],
+                humidity_entity_id=room_sensors.get(CONF_HUMIDITY_ENTITY, None),
                 presets=None,  # TODO add preset support
             )
         )

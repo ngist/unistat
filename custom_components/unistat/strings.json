@@ -678,7 +678,7 @@
         "title": "Room Sensor Setup",
         "description": "Configure sensors for {room}",
         "data": {
-          "temp_entity": "Temperature Sensor",
+          "temp_entity": "Temperature Sensor*",
           "humidity_entity": "Humidity Sensor"
         }
       },
@@ -687,7 +687,7 @@
         "description": "Configuration for {appliance}",
         "data": {
           "appliance_type": "Appliance Type",
-          "area": "Areas directly affected(specify all)"
+          "areas": "Areas directly affected(specify all)"
         }
       },
       "room_appliance_2": {
@@ -706,11 +706,10 @@
         }
       },
       "central_appliance": {
-        "title": "Add new central appliance associated with {appliance}",
-        "description": "Input the heating and cooling characteristics of the ",
+        "title": "Add new {central_appliance}",
+        "description": "Input the heating and cooling characteristics of the {central_appliance} associated with {appliance}",
         "data": {
           "name": "Central Appliance Name",
-          "central_appliance": "Associated Central Appliance",
           "cooling_power": "Cooling Power",
           "heating_power": "Heating Power",
           "unit_of_measurement": "Heating/Cooling Power Units",
@@ -718,7 +717,21 @@
           "seer_standard": "Rating version",
           "hspf_rating": "HSPF or HSPF2 Rating",
           "hspf_standard": "Rating version",
-          "appliance_meter": "Appliance Utility Meter(if available)"
+          "appliance_meter": "Appliance Utility Meter(if available)",
+          "efficiency": "Efficiency",
+          "boiler_inlet_temp": "Boiler inlet temperature entity",
+          "boiler_outlet_temp": "Boiler outlet temperature entity"
+        }
+      },
+      "weather_station": {
+        "title": "Local Weather Station Sensors",
+        "description": "All are optional, but specifying these sensors may improve performance",
+        "data": {
+          "temp_entity": "Temperature Sensor",
+          "humidity_entity": "Humidity Sensor",
+          "wind_speed_entity": "Wind Speed Sensor",
+          "wind_direction_entity": "Wind Direction Sensor",
+          "solar_flux_entity": "Solar Flux Sensor"
         }
       }
     }
