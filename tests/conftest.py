@@ -19,8 +19,3 @@ def mock_setup_entry() -> Generator[AsyncMock]:
 def auto_enable_custom_integrations(enable_custom_integrations):
     """Dunno what this is for but it's required."""
     return
-
-
-pytest_plugins = [
-    "tests.fixtures.config",
-]

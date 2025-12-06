@@ -31,6 +31,7 @@ CONF_SEER_STANDARD = "seer_version"
 CONF_HSPF_RATING = "hspf_rating"
 CONF_HSPF_STANDARD = "hspf_version"
 CONF_EFFICIENCY = "efficiency"
+CONF_CENTRAL_APPLIANCE = "central_appliance"
 
 # Boiler Specific Settings
 CONF_BOILER_INLET_TEMP_ENTITY = "boiler_inlet_temp"

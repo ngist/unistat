@@ -6,6 +6,10 @@ from unittest.mock import AsyncMock
 from custom_components.unistat.const import (
     CONF_AREAS,
     CONF_CONTROLS,
+    CONF_ADJACENCY,
+    CONF_WEATHER_STATION,
+    CONF_CENTRAL_APPLIANCE,
+    CONF_APPLIANCE_TYPE,
     DOMAIN,
 )
 import pytest
@@ -14,71 +18,149 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
+from .config_gen import (
+    ConfigParams,
+    make_adjacency,
+    make_boiler,
+    make_expected,
+    make_main_conf,
+    make_multiroom_sensors,
+    make_spaceheater,
+    make_weather_station,
+    make_zonevalve,
+)
+
 pytestmark = pytest.mark.usefixtures("mock_setup_entry")
 
+
+def split_room_app_config(room_appliance: dict):
+    STEP1_KEYS = [CONF_APPLIANCE_TYPE, CONF_AREAS]
+    step1 = {k: room_appliance[k] for k in room_appliance if k in STEP1_KEYS}
+    step2 = room_appliance.copy()
+    for k in STEP1_KEYS:
+        step2.pop(k)
+    return (step1, step2)
+
+
+async def config_step(hass, result, config_data):
+    assert result["type"] is FlowResultType.FORM
+    assert not result["errors"]
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        config_data,
+    )
+    await hass.async_block_till_done()
+    return result
+
+
+rooms = ["kitchen"]
+controls = ["switch.spaceheater"]
+# Minimal config flow
+_NOMINAL_MINIMAL_CONF = ConfigParams(
+    main_conf=make_main_conf(rooms=rooms, controls=controls),
+    room_sensors=make_multiroom_sensors(rooms),
+    room_appliances={controls[0]: make_spaceheater(rooms[0])},
+)
+
+# Minimal config flow with weather station
+_NOMINAL_MIN_WS_CONF = ConfigParams(
+    main_conf=make_main_conf(rooms=rooms, controls=controls, use_weather_station=True),
+    room_sensors=make_multiroom_sensors(rooms),
+    room_appliances={controls[0]: make_spaceheater(rooms[0])},
+    weather_station=make_weather_station(temp="sensor.outside_temp"),
+)
+
+# Minimal config flow with adjacency
+_NOMINAL_MIN_ADJ_CONF = ConfigParams(
+    main_conf=make_main_conf(rooms=rooms, controls=controls, use_adjacency=True),
+    room_sensors=make_multiroom_sensors(rooms),
+    room_appliances={controls[0]: make_spaceheater(rooms[0])},
+    adjacency=make_adjacency(rooms),
+)
+
+# Minimal config flow with weather station and adjacency
+_NOMINAL_MIN_ADJ_WS_CONF = ConfigParams(
+    main_conf=make_main_conf(
+        rooms=rooms, controls=controls, use_weather_station=True, use_adjacency=True
+    ),
+    room_sensors=make_multiroom_sensors(rooms),
+    room_appliances={controls[0]: make_spaceheater(rooms[0])},
+    weather_station=make_weather_station(temp="sensor.outside_temp"),
+    adjacency=make_adjacency(rooms),
+)
+
+# Minimal config flow with a central appliance
+controls = ["switch.zonevalve"]
+_NOMINAL_MINIMAL_WCENTRAL_CONF = ConfigParams(
+    main_conf=make_main_conf(rooms=rooms, controls=controls),
+    room_sensors=make_multiroom_sensors(rooms),
+    room_appliances={controls[0]: make_zonevalve(rooms)},
+    central_appliances=[make_boiler()],
+)
+
+CONFIG_FLOWS = [
+    _NOMINAL_MINIMAL_CONF,
+    _NOMINAL_MIN_WS_CONF,
+    _NOMINAL_MIN_ADJ_CONF,
+    _NOMINAL_MIN_ADJ_WS_CONF,
+    _NOMINAL_MINIMAL_WCENTRAL_CONF,
+]
 
 PLATFORMS = ["climate"]
 
 
 @pytest.mark.parametrize("platform", PLATFORMS)
-async def test_minimal_config_flow(
+@pytest.mark.parametrize("config", CONFIG_FLOWS)
+async def test_nominal_config_flow(
     hass: HomeAssistant,
     mock_setup_entry: AsyncMock,
     platform,
-    main_minimal,
-    spaceheater_minimal,
-    room_sensors,
+    config,
 ) -> None:
     """Test the minimal config flow with no optional inputs."""
 
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
-    assert result["type"] is FlowResultType.FORM
-    assert not result["errors"]
 
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"],
-        main_minimal,
-    )
-    await hass.async_block_till_done()
+    # Main Config step "user"
+    result = await config_step(hass, result, config.main_conf)
 
-    expected = main_minimal.copy()
-    expected["room_sensors"] = {}
-    expected["room_appliances"] = {}
-    expected["central_appliances"] = {}
+    # Adjacency config
+    if config.main_conf[CONF_ADJACENCY]:
+        result = await config_step(hass, result, config.adjacency)
 
-    for r in main_minimal[CONF_AREAS]:
-        assert result["type"] is FlowResultType.FORM
-        assert not result["errors"]
-        expected["room_sensors"][r] = room_sensors[r]
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            room_sensors[r],
-        )
-        await hass.async_block_till_done()
+    # Weather station config
+    if config.main_conf[CONF_WEATHER_STATION]:
+        result = await config_step(hass, result, config.weather_station)
 
-    for c in main_minimal[CONF_CONTROLS]:
-        expected["room_appliances"][c] = spaceheater_minimal[0].copy()
-        expected["room_appliances"][c].update(spaceheater_minimal[1])
+    # Room sensor config
+    for r in config.main_conf[CONF_AREAS]:
+        result = await config_step(hass, result, config.room_sensors[r])
 
+    # Appliance config
+    central_app_index = 0
+    for c in config.main_conf[CONF_CONTROLS]:
+        step1_conf, step2_conf = split_room_app_config(config.room_appliances[c])
         # Step 1
-        assert result["type"] is FlowResultType.FORM
-        assert not result["errors"]
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            spaceheater_minimal[0],
-        )
-        await hass.async_block_till_done()
+        result = await config_step(hass, result, step1_conf)
 
         # Step 2
-        assert result["type"] is FlowResultType.FORM
-        assert not result["errors"]
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            spaceheater_minimal[1],
-        )
-        await hass.async_block_till_done()
+        result = await config_step(hass, result, step2_conf)
+
+        if (
+            CONF_CENTRAL_APPLIANCE in step2_conf
+            and step2_conf[CONF_CENTRAL_APPLIANCE] == "New"
+        ):
+            # central appliance conf
+            result = await config_step(
+                hass, result, config.central_appliances[central_app_index][1]
+            )
+            central_app_index += 1
+
+    # Check results
+    expected = make_expected(config)
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "My UniStat"
@@ -90,77 +172,6 @@ async def test_minimal_config_flow(
     assert config_entry.data == expected
     assert config_entry.options == {}
     assert config_entry.title == "My UniStat"
-
-
-# @pytest.mark.parametrize("platform", PLATFORMS)
-# async def test_maximal_config_flow(
-#     hass: HomeAssistant, mock_setup_entry: AsyncMock, platform
-# ) -> None:
-#     """Test the config flow with all optional inputs."""
-
-#     # User Step
-#     result = await hass.config_entries.flow.async_init(
-#         DOMAIN, context={"source": config_entries.SOURCE_USER}
-#     )
-#     assert result["type"] is FlowResultType.FORM
-#     assert not result["errors"]
-
-#     result = await hass.config_entries.flow.async_configure(
-#         result["flow_id"],
-#         MAIN_SETTINGS_MAXIMAL,
-#     )
-#     await hass.async_block_till_done()
-
-#     # Boiler Settings Step
-#     assert result["type"] is FlowResultType.FORM
-#     assert not result["errors"]
-#     result = await hass.config_entries.flow.async_configure(
-#         result["flow_id"],
-#         BOILER_SETTINGS_MAXIMAL,
-#     )
-#     await hass.async_block_till_done()
-
-#     # ROOM 1
-#     assert result["type"] is FlowResultType.FORM
-#     assert not result["errors"]
-#     result = await hass.config_entries.flow.async_configure(
-#         result["flow_id"],
-#         ROOM_1_SETTINGS,
-#     )
-#     await hass.async_block_till_done()
-
-#     # ROOM 2
-#     assert result["type"] is FlowResultType.FORM
-#     assert not result["errors"]
-#     result = await hass.config_entries.flow.async_configure(
-#         result["flow_id"],
-#         ROOM_2_SETTINGS,
-#     )
-#     await hass.async_block_till_done()
-
-#     # ROOM 3
-#     assert result["type"] is FlowResultType.FORM
-#     assert not result["errors"]
-#     result = await hass.config_entries.flow.async_configure(
-#         result["flow_id"],
-#         ROOM_3_SETTINGS,
-#     )
-#     await hass.async_block_till_done()
-
-#     assert result["type"] is FlowResultType.CREATE_ENTRY
-#     assert result["title"] == "My UniStat"
-#     expected = MAIN_SETTINGS_MAXIMAL.copy()
-#     expected["room_conf"] = [ROOM_1_SETTINGS, ROOM_2_SETTINGS, ROOM_3_SETTINGS]
-#     expected["boiler_conf"] = BOILER_SETTINGS_MAXIMAL
-#     expected["use_adjacency"] = False  # TODO remove onvce adjacency is added
-#     assert result["data"] == expected
-#     assert result["options"] == {}
-#     assert len(mock_setup_entry.mock_calls) == 1
-
-#     config_entry = hass.config_entries.async_entries(DOMAIN)[0]
-#     assert config_entry.data == expected
-#     assert config_entry.options == {}
-#     assert config_entry.title == "My UniStat"
 
 
 # DUPLICATE_CASES = [

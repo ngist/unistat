@@ -30,6 +30,7 @@ from .const import (
     CONF_AREAS,
     CONF_CONTROLS,
     CONF_APPLIANCE_TYPE,
+    CONF_CENTRAL_APPLIANCE,
     CONF_WEATHER_ENTITY,
     CONF_GAS_PRICE_ENTITY,
     CONF_ELECTRIC_PRICE_ENTITY,
@@ -252,7 +253,7 @@ FURNACE_SCHEMA = (
     .extend(METER_SCHEMA)
     .extend(
         {
-            vol.Optional(CONF_EFFICIENCY, default=80): selector.NumberSelector(
+            vol.Required(CONF_EFFICIENCY, default=80): selector.NumberSelector(
                 {
                     "min": 0,
                     "max": 100,
@@ -283,7 +284,6 @@ BOILER_SCHEMA = FURNACE_SCHEMA.extend(
 
 COMPRESSOR_SCHEMA = (
     vol.Schema(NAME_SCHEMA)
-    .extend(HEATING_SCHEMA)
     .extend(COOLING_SCHEMA)
     .extend(POWER_UNIT_SCHEMA)
     .extend(SEER_SCHEMA)
@@ -369,10 +369,6 @@ def gen_adjacency_schema(rooms) -> tuple[vol.Schema, dict[str, str]]:
     """Generates an adjacency matrix schema based on the number of rooms, and associated placeholder data."""
     locations = ["Outside", *rooms]
     placeholders = {f"room{i}": r for i, r in enumerate(locations)}
-    # placeholders = base_placeholders.copy()
-    # placeholders["sections"] = {}
-    # for i in range(len(locations)):
-    #     placeholders["sections"].update({f"room{i}": base_placeholders})
 
     schema = {}
     for i, _ in enumerate(locations):
@@ -394,7 +390,9 @@ def gen_select_central_schema(central_appliances: list[str]) -> vol.Schema:
     central_appliances = ["New", *central_appliances]
     return vol.Schema(
         {
-            vol.Required("central_appliance", default="New"): selector.SelectSelector(
+            vol.Required(
+                CONF_CENTRAL_APPLIANCE, default="New"
+            ): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=central_appliances,
                     mode=selector.SelectSelectorMode.DROPDOWN,
@@ -535,8 +533,8 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Input is valid, set data.
             if (
-                "central_appliance" in user_input
-                and user_input["central_appliance"] == "New"
+                CONF_CENTRAL_APPLIANCE in user_input
+                and user_input[CONF_CENTRAL_APPLIANCE] == "New"
             ):
                 return await self.async_step_central_appliance()
 
@@ -565,9 +563,9 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             # Input is valid, set data.
-            self.data["room_appliances"][self.this_appliance]["central_appliance"] = (
-                user_input[CONF_NAME]
-            )
+            self.data["room_appliances"][self.this_appliance][
+                CONF_CENTRAL_APPLIANCE
+            ] = user_input[CONF_NAME]
             user_input["appliance_type"] = A2C_MAP[self.appliance_type]
             self.data["central_appliances"][user_input[CONF_NAME]] = user_input
 
