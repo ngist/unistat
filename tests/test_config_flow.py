@@ -99,12 +99,30 @@ _NOMINAL_MINIMAL_WCENTRAL_CONF = ConfigParams(
     central_appliances=[make_boiler()],
 )
 
+rooms = ["kitchen", "bedroom", "living_room"]
+controls = [
+    "switch.kitchen_spaceheater",
+    "switch.boiler_zonevalve",
+    "switch.boiler_zonevalve2",
+]
+_NOMINAL_COMPLEX_CONF = ConfigParams(
+    main_conf=make_main_conf(rooms=rooms, controls=controls),
+    room_sensors=make_multiroom_sensors(rooms),
+    room_appliances={
+        controls[0]: make_spaceheater(rooms[0]),
+        controls[1]: make_zonevalve([rooms[1]], central_appliance="New"),
+        controls[2]: make_zonevalve([rooms[2]], central_appliance="boiler"),
+    },
+    central_appliances=[make_boiler(name="boiler")],
+)
+
 CONFIG_FLOWS = [
     _NOMINAL_MINIMAL_CONF,
     _NOMINAL_MIN_WS_CONF,
     _NOMINAL_MIN_ADJ_CONF,
     _NOMINAL_MIN_ADJ_WS_CONF,
     _NOMINAL_MINIMAL_WCENTRAL_CONF,
+    _NOMINAL_COMPLEX_CONF,
 ]
 
 PLATFORMS = ["climate"]
