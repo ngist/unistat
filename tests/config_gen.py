@@ -168,9 +168,7 @@ def _make_peripheral(
     }
 
 
-make_zonevalve = partial(
-    _make_peripheral, app_type=ControlApplianceType.BoilerZoneValve
-)
+make_zonevalve = partial(_make_peripheral, app_type=ControlApplianceType.BoilerZoneCall)
 make_trv = partial(
     _make_peripheral, app_type=ControlApplianceType.ThermoStaticRadiatorValve
 )

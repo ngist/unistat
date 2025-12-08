@@ -348,7 +348,7 @@ _APPLIANCE_SCHEMA_MAP = {
 }
 
 _A2C_MAP = {
-    ControlApplianceType.BoilerZoneValve: CentralApplianceType.HydroBoiler,
+    ControlApplianceType.BoilerZoneCall: CentralApplianceType.HydroBoiler,
     ControlApplianceType.ThermoStaticRadiatorValve: CentralApplianceType.HydroBoiler,
     ControlApplianceType.HVACCoolCall: CentralApplianceType.AcCompressor,
     ControlApplianceType.HVACHeatCall: CentralApplianceType.HvacFurnace,

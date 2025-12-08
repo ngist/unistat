@@ -59,7 +59,7 @@ class ControlApplianceType(StrEnum):
     """Appliance Types."""
 
     HeatpumpFanUnit = "HeatpumpFanUnit"
-    BoilerZoneValve = "BoilerZoneValve"
+    BoilerZoneCall = "BoilerZoneCall"
     ThermoStaticRadiatorValve = "ThermoStaticRadiatorValve"
     HVACThermostat = "HVACThermostat"
     HVACHeatCall = "HVACHeatCall"
@@ -70,7 +70,7 @@ class ControlApplianceType(StrEnum):
 
 
 SWITCH_APPLIANCE_TYPES = [
-    ControlApplianceType.BoilerZoneValve,
+    ControlApplianceType.BoilerZoneCall,
     ControlApplianceType.HVACCoolCall,
     ControlApplianceType.HVACHeatCall,
     ControlApplianceType.SpaceHeater,
