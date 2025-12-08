@@ -421,10 +421,6 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     VERSION = 1
     MINOR_VERSION = 1
 
-    # def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
-    #     """Return config entry title."""
-    #     return cast(str, options["name"]) if "name" in options else ""
-
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -598,32 +594,3 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 "central_appliance": str(_A2C_MAP[self.appliance_type]),
             },
         )
-
-
-# class MyOptionsFlow(OptionsFlowWithReload):
-#     async def async_step_init(
-#         self, user_input: dict[str, Any] | None = None
-#     ) -> ConfigFlowResult:
-#         """Invoked when a user initiates a flow via the user interface."""
-#         if user_input is not None:
-#             self.data = user_input
-#             self.data["room_conf"] = []
-#             self.added_temp_sensors = set()
-#             self.added_humidity_sensors = set()
-#             self.added_areas = set()
-#             if CONF_OUTDOOR_SENSORS in user_input:
-#                 if CONF_TEMP_ENTITY in user_input[CONF_OUTDOOR_SENSORS]:
-#                     self.added_temp_sensors.add(
-#                         user_input[CONF_OUTDOOR_SENSORS][CONF_TEMP_ENTITY]
-#                     )
-#                 if CONF_HUMIDITY_ENTITY in user_input[CONF_OUTDOOR_SENSORS]:
-#                     self.added_humidity_sensors.add(
-#                         user_input[CONF_OUTDOOR_SENSORS][CONF_HUMIDITY_ENTITY]
-#                     )
-#             self.data[CONF_ADJACENCY] = False  # TODO Remove once adjacency is supported
-#             if self.data[CONF_BOILER]:
-#                 return await self.async_step_boiler()
-#             # Return the form of the next step.
-#             return await self.async_step_room()
-
-#         return self.async_show_form(step_id="user", data_schema=MAIN_SCHEMA)
