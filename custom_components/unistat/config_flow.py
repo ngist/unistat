@@ -412,7 +412,7 @@ def parse_adjacency(
     for k in user_input:
         i = int(k.replace("room", ""))
         for r in user_input[k]:
-            adj_mat[i][room2idx[r] + 1] = user_input[k][r]
+            adj_mat[i][room2idx[r] + 1] = 1 if user_input[k][r] else 0
     return adj_mat
 
 
