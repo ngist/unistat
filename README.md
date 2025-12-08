@@ -69,12 +69,13 @@ Supported control outputs:
 
 - [ ] Handle rooms with multiple heating/cooling appliances.
 - [ ] Handle multiple rooms that are on the same heating or cooling zone
+- [ ] Implement room adjacency for better control
 - [ ] Use external temperature to optimize control
 - [ ] Use boiler inlet/outlet temperatures to optimize control
-- [ ] Implement room adjacency for better control
 - [ ] Implement comfort mode
 - [ ] Implement budget mode
 - [ ] Automatic tuning - no user configuration of control loop parameters everything is learned by mathemagic(or AI if you want to call it that).
+- [ ] Implement better input validation on config options
 - [ ] Implement presets
 - [ ] Implement schedules
 - [ ] Smart Start - activates heating or cooling early so temp is achieved by the scheduled time.
@@ -91,7 +92,7 @@ Supported control outputs:
 
 1. Setup [Areas](https://www.home-assistant.io/docs/organizing/areas/) for any room in your house you want this integration to control, or to have temperature readings for.
 2. Have at least one temperature sensor in each Area you're interested in controlling, it doesn't need to be associated with the area in HA(though you probably should associate it), it just needs to be physically located there.
-3. Have at least one climate control device controllable by HA, either switch or climate.
+3. Have at least one climate control device controllable by HA, either switch or climate. You do not need to have a unique climate control device for every room. You can even have rooms which have no associated climate controls.
 
 ## Installation
 
@@ -99,45 +100,91 @@ The simplest way to install this integration is with the Home Assistant Communit
 
 ## Configuration
 
-The configuration flow centers around rooms and appliances. During the first step you will list the rooms and appliances to be configured and then will be prompted to setup each one.
+The configuration flow centers around rooms and climate controls (or appliances). During the first step you will list the rooms and appliances to be configured and then will be prompted to setup each one.
 
-Rooms list: During the first configuration step you will specify all indoor areas(rooms) that will be considered by UniStat, all of these rooms must have their own unique temperature sensor in them. If you have a room without a temperature sensor just leave it out regardless of whether it is controlled by a heating or cooling appliance.
+### Main configuration
 
-Applliance list:
+#### Rooms list:
 
-### Outdoor sensors
+During the first configuration step you will specify all indoor areas(rooms) that will be considered by UniStat, all of these rooms must have their own unique temperature sensor in them. If you have a room without a temperature sensor just leave it out regardless of whether it is controlled by a heating or cooling appliance.
 
-These are entirely optional, but populating at least outside temperature is recommended, for most people the other sensors will have minimal impact.
+#### Climate controls list:
 
-If you have a weather station you can use entities from this to populate outdoor sensors, if you don't have a weather station you can use a weather integration to provide these entities.
+These controls should each correspond to a unique climate control for your house, if you have a thermostat(climate entity) but also have access to directly control the heating/cooling calls you should not include both, the climate entity and the heating/cooling switch entities. You should choose one or the other, the heating or cooling calls are most likely preferable.
 
-Rough order of importance of outside sensors:
+Some climate controls are associated with a central appliance, for instance you may have several boiler zone valves or TRVs but there's typically a single boiler that services all the zones, when you configure one of these appliances you'll be prompted to selected the associated central appliance or create a new one if it does not exist yet.
 
-1. Temperature (this matters for everyone)
-2. Wind Speed (this will matter more for older drafty homes)
-3. Wind Direction (this will matter more for older drafty homes)
-4. Solar Irradiance (probably doesn't matter that much)
+#### Weather entity:
 
-### Boiler settings
+The weather entity is required this is used to fetch the forecasted ambient outdoor temperatures for your house, so that it can anticipate the future heating and cooling demand. It is also used to provide other outdoor sensors for the current ambient conditions unless you check the option to use a local weather station then you can specify your own local sensors.
 
-If you have a hydronic(aka water) boiler then you'll want to specify the heat call switch or switches if you have a multizone system. It's important for the system to know which controls are associated with the hydronic boiler as they have much longer time constants than HVAC/Heatpump/electric type systems.
+#### Energy price entities:
 
-> [!Note]
-> This integration assumes a hydronic boiler system with one or more heat call switches for one/off type zone valves(all valves are assumed to be normally closed, if you have a normally open valve invert it before passing it in), or flow regulating valves(TRVs). If you have an always circulating system with reset controller or some other exotic boiler system. These aren't supported right now. If you are interested in adding support open a pr or [issue](https://github.com/ngist/unistat/issues)
+Energy prices are optional, if you only have one energy source then you can safely omit these, but if you have some electric and some gas heating then these are very important for budget mode, if you don't set them then budget mode won't really work effectively.
+
+These are configured as entities rather than input values for two reasons.
+
+- It allows for better reuse and maintenance in the event that you also use these values with utility meters to compute your spending. When rates change you only need to update one value.
+- If you have a time of use plan on your electricity or some other dynamic pricing scheme, this allows it to be properly taken into account as utility rates change. Note: There unlike with temperature there is no look ahead on utility prices at each control cycle prices are assumed to be fixed at the current rate into the future.
+
+### Adjacency
+
+Specifying adjacency is optional. If you have a well balanced heating and cooling system, or only a central HVAC system you probably don't need to worry about this.
+
+If not specified then all rooms are treated as not adjacent, this means the model assumes heatflow between them to be negligible. Situations that would break this assumption might be high temperature differentials between rooms.
+
+Adjacency should be specified if there is significant heatflow between rooms.
+
+> [!NOTE]  
+> When configuring adjacency some rooms might be adjacent that are not obvious, remember a square room has 6 sides, the four walls plus the floor and ceiling. Additionally you may want to specify adjacency between rooms if you suspect there is the potential for significant heatflow between them even if they are not physically adjacent.
+
+### Weather Station Config
+
+Using a weather station is optional everything can be obtained from the weather forecast entity in the first step as such all these entities are optional.
+
+If you want to use this integration without internet then you'll want to have at least the outside temperature or you want it to work well during sustained internet blackouts. Really all you need is temperature the others aren't currently used but may be some day.
 
 ### Room settings
 
-You must specify what home assistant "area" these settings are for any entities that this integration makes will be added to these areas.
+For each room you specified in the first step you'll be propted to configure it's sensors.
 
-You must specify a temperature sensor for the area, you can specify more than one if you like but you shouldn't need more than one if it's well placed. If you do specify more than one then the average reading is used for control. **Temperature sensors must be unique to each area, sharing temperature sensors across multiple areas is not allowed**
+Each room must have a unique temperature sensors, humidity is optional, but if specified it must also be unique to that room.
 
-You can optionally specify a humidity sensor for the area, if you also want to control a humidity appliance.
-**Humidity sensors must be unique to each area, sharing temperature sensors across multiple areas is not allowed**
+### Appliance settings
 
-In general because a heating or cooling appliance or zone may cover more than one room, it is allowed and even recommended to reuse these entities across multiple rooms to capture their association with those rooms.
+#### Terminology
 
-Examples:
-Scenario 1: The first floor is on a single boiler zone(switch.boiler_zone1) but you have three rooms with one temp sensors in each room. There are several options on how this could be configured. 1. (Preferred) You can setup 3 different areas each with it's own temp sensor, and use the same switch.boiler_zone1 for the heat call in all three. 2. (Not Recommended) You can setup a single area in UniStat and add all three temp sensors to it.  
- 3. (Not Recommended) You only really care about one room, so you only setup a single area in UniStat and only supply the associated temp sensor for the room you care about.
+##### Direct/Indirect
 
-        2 is not recommended as it provides less granular control, maybe you want to control to a different room at different times of day, option 2 doesn't allow for this. 3 omits information from UltraStat, which once adjacency information is added can help improve temperature control in the room you care about, you can just disable control in the rooms you aren't interested in after you setup UltraStat.
+To properly configure the appliances it's important to define the concept of direct and indirect heating and cooling. Consider two room house the first room has a radiator in it and the second does not. The radiator directly heats the first room, and due to the fact that there is a relatively low thermal resistance between the rooms relative to the outside it indirectly heats the second room.
+
+##### Standalone/Peripheral/Central Appliances
+
+A control appliance can either be a **standalone appliance**, or a **peripheral appliance**. A **standalone appliance** is entirely contained in a room and directly affects only that room, a concrete example is an electric space heater. An example of a **peripheral appliance** would be a boiler zone call, it supplies heat to one or more rooms, but is dependent on a **central appliance**, the boiler. Central appliances are things like a furnace for an HVAC system, an AC compressor, or a Heatpump that supplies an HVAC system or multiple mini-splits.
+
+#### Control Appliance configuration
+
+You'll first need to select the appliance type, and what rooms it directly controls. The types available will depend on the underlying entity type. See the lists below for reference:
+
+For switch entities:
+
+- HVAC Cooling Call(Central)
+- HVAC Heating Call(Central)
+- BoilerZoneCall(Central)
+- SpaceHeater(Room)
+- WindowAC(Room)
+
+For climate entities:
+
+- HVACThermostat(Central)
+- HeatpumpFanUnit(Central)
+- WindowHeatpump(Room)
+
+If a peripheral appliance has been specified you'll be prompted to specify the associated central appliance or add a new one.
+
+If it's a standalone appliance you'll be prompted to enter information about it's heating or cooling capabilities and it's efficiency, all these should be obtainable from the sticker on the appliance.
+
+Similarly if a central appliance needs to be configured you should be able to get all the info needed from the sticker on the appliance.
+
+> [!NOTE]  
+> Right now all efficiency numbers are based around SEER/SEER2, HSPF/HSPF2, and AFUE. These are US efficiency standards that appliance manufacturers in the US are required to put on their appliances. I'm happy to include other metrics based on other global standards if someone is willing to educate me.
