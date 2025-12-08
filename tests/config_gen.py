@@ -1,3 +1,5 @@
+import numpy as np
+
 from typing import Optional, NamedTuple
 
 from functools import partial
@@ -74,7 +76,15 @@ def make_expected(config: ConfigParams):
                 central_counter += 1
 
     if expected[CONF_ADJACENCY]:
-        expected["adjacency"] = config.adjacency.copy()
+        rooms = expected[CONF_AREAS]
+        size = len(rooms) + 1
+        adj = np.zeros((size, size), dtype=np.bool).tolist()
+        room2idx = {r: i for i, r in enumerate(config.main_conf[CONF_AREAS])}
+        for k in config.adjacency:
+            i = int(k.replace("room", ""))
+            for r in config.adjacency[k]:
+                adj[i][room2idx[r] + 1] = config.adjacency[k][r]
+        expected["adjacency"] = adj
     if expected[CONF_WEATHER_STATION]:
         expected["weather_station"] = config.weather_station.copy()
     return expected

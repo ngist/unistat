@@ -402,7 +402,18 @@ def gen_select_central_schema(central_appliances: list[str]) -> vol.Schema:
     )
 
 
-# def gen_appliance_schema(appliance_type: ControlApplianceType) -> vol.Schema:
+def parse_adjacency(
+    user_input: dict[str, dict[str, bool]], rooms: list[str]
+) -> list[list[bool]]:
+    """Converts the user input to an array like list of lists."""
+    dim = len(user_input.keys()) + 1
+    adj_mat = [[False] * dim for i in range(dim)]
+    room2idx = {r: i for i, r in enumerate(rooms)}
+    for k in user_input:
+        i = int(k.replace("room", ""))
+        for r in user_input[k]:
+            adj_mat[i][room2idx[r] + 1] = user_input[k][r]
+    return adj_mat
 
 
 class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
@@ -439,8 +450,9 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         """Configure room adjacency matrix."""
         if user_input is not None:
             # Input is valid, set data.
-            # TODO Format adjacency better
-            self.data["adjacency"] = user_input
+            self.data["adjacency"] = parse_adjacency(
+                user_input=user_input, rooms=self.data[CONF_AREAS]
+            )
             # Return the form of the next step.
             if self.data[CONF_WEATHER_STATION]:
                 return await self.async_step_weather_station()
