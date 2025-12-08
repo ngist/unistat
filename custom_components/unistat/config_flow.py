@@ -59,7 +59,7 @@ from .const import (
     CentralApplianceType,
 )
 
-MAIN_SCHEMA = vol.Schema(
+_MAIN_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): selector.TextSelector(),
         vol.Required(CONF_AREAS): selector.AreaSelector(
@@ -114,7 +114,7 @@ MAIN_SCHEMA = vol.Schema(
     }
 )
 
-WEATHER_STATION_SCHEMA = vol.Schema(
+_WEATHER_STATION_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_TEMP_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(
@@ -149,7 +149,7 @@ WEATHER_STATION_SCHEMA = vol.Schema(
     }
 )
 
-ROOM_SCHEMA = vol.Schema(
+_ROOM_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_TEMP_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(
@@ -166,11 +166,11 @@ ROOM_SCHEMA = vol.Schema(
     }
 )
 
-NAME_SCHEMA = {
+_NAME_SCHEMA = {
     vol.Required(CONF_NAME): selector.TextSelector(),
 }
 
-HEATING_SCHEMA = {
+_HEATING_SCHEMA = {
     vol.Required(CONF_HEATING_POWER): selector.NumberSelector(
         {
             "min": 0,
@@ -179,7 +179,7 @@ HEATING_SCHEMA = {
     ),
 }
 
-COOLING_SCHEMA = {
+_COOLING_SCHEMA = {
     vol.Required(CONF_COOLING_POWER): selector.NumberSelector(
         {
             "min": 0,
@@ -188,7 +188,7 @@ COOLING_SCHEMA = {
     ),
 }
 
-POWER_UNIT_SCHEMA = {
+_POWER_UNIT_SCHEMA = {
     vol.Required(
         CONF_UNIT_OF_MEASUREMENT,
         default=UnitOfPower.BTU_PER_HOUR,
@@ -200,7 +200,7 @@ POWER_UNIT_SCHEMA = {
     ),
 }
 
-METER_SCHEMA = {
+_METER_SCHEMA = {
     vol.Optional(CONF_APPLIANCE_METER): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=UTILITY_METER_DOMAIN,
@@ -208,7 +208,7 @@ METER_SCHEMA = {
     ),
 }
 
-SEER_SCHEMA = {
+_SEER_SCHEMA = {
     vol.Optional(CONF_SEER_RATING, default=15): selector.NumberSelector(
         {
             "min": 10,
@@ -227,7 +227,7 @@ SEER_SCHEMA = {
     ),
 }
 
-HSPF_SCHEMA = {
+_HSPF_SCHEMA = {
     vol.Optional(CONF_HSPF_RATING, default=15): selector.NumberSelector(
         {
             "min": 5,
@@ -246,11 +246,11 @@ HSPF_SCHEMA = {
     ),
 }
 
-FURNACE_SCHEMA = (
-    vol.Schema(NAME_SCHEMA)
-    .extend(HEATING_SCHEMA)
-    .extend(POWER_UNIT_SCHEMA)
-    .extend(METER_SCHEMA)
+_FURNACE_SCHEMA = (
+    vol.Schema(_NAME_SCHEMA)
+    .extend(_HEATING_SCHEMA)
+    .extend(_POWER_UNIT_SCHEMA)
+    .extend(_METER_SCHEMA)
     .extend(
         {
             vol.Required(CONF_EFFICIENCY, default=80): selector.NumberSelector(
@@ -265,7 +265,7 @@ FURNACE_SCHEMA = (
     )
 )
 
-BOILER_SCHEMA = FURNACE_SCHEMA.extend(
+_BOILER_SCHEMA = _FURNACE_SCHEMA.extend(
     {
         vol.Optional(CONF_BOILER_INLET_TEMP_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(
@@ -282,45 +282,44 @@ BOILER_SCHEMA = FURNACE_SCHEMA.extend(
     }
 )
 
-COMPRESSOR_SCHEMA = (
-    vol.Schema(NAME_SCHEMA)
-    .extend(COOLING_SCHEMA)
-    .extend(POWER_UNIT_SCHEMA)
-    .extend(SEER_SCHEMA)
-    .extend(METER_SCHEMA)
+_COMPRESSOR_SCHEMA = (
+    vol.Schema(_NAME_SCHEMA)
+    .extend(_COOLING_SCHEMA)
+    .extend(_POWER_UNIT_SCHEMA)
+    .extend(_SEER_SCHEMA)
+    .extend(_METER_SCHEMA)
 )
 
-HEATPUMP_COMP_SCHEMA = (
-    vol.Schema(NAME_SCHEMA)
-    .extend(HEATING_SCHEMA)
-    .extend(COOLING_SCHEMA)
-    .extend(HEATING_SCHEMA)
-    .extend(POWER_UNIT_SCHEMA)
-    .extend(SEER_SCHEMA)
-    .extend(HSPF_SCHEMA)
-    .extend(METER_SCHEMA)
+_HEATPUMP_COMP_SCHEMA = (
+    vol.Schema(_NAME_SCHEMA)
+    .extend(_COOLING_SCHEMA)
+    .extend(_HEATING_SCHEMA)
+    .extend(_POWER_UNIT_SCHEMA)
+    .extend(_SEER_SCHEMA)
+    .extend(_HSPF_SCHEMA)
+    .extend(_METER_SCHEMA)
 )
 
-WINDOW_AC_SCHEMA = (
-    vol.Schema(COOLING_SCHEMA)
-    .extend(POWER_UNIT_SCHEMA)
-    .extend(SEER_SCHEMA)
-    .extend(METER_SCHEMA)
+_WINDOW_AC_SCHEMA = (
+    vol.Schema(_COOLING_SCHEMA)
+    .extend(_POWER_UNIT_SCHEMA)
+    .extend(_SEER_SCHEMA)
+    .extend(_METER_SCHEMA)
 )
-WINDOW_HP_SCHEMA = (
-    vol.Schema(COOLING_SCHEMA)
-    .extend(HEATING_SCHEMA)
-    .extend(POWER_UNIT_SCHEMA)
-    .extend(SEER_SCHEMA)
-    .extend(HSPF_SCHEMA)
-    .extend(METER_SCHEMA)
+_WINDOW_HP_SCHEMA = (
+    vol.Schema(_COOLING_SCHEMA)
+    .extend(_HEATING_SCHEMA)
+    .extend(_POWER_UNIT_SCHEMA)
+    .extend(_SEER_SCHEMA)
+    .extend(_HSPF_SCHEMA)
+    .extend(_METER_SCHEMA)
 )
-SPACE_HEATER_SCHEMA = (
-    vol.Schema(HEATING_SCHEMA).extend(POWER_UNIT_SCHEMA).extend(METER_SCHEMA)
+_SPACE_HEATER_SCHEMA = (
+    vol.Schema(_HEATING_SCHEMA).extend(_POWER_UNIT_SCHEMA).extend(_METER_SCHEMA)
 )
 
 
-def gen_room_appliance_schema(entity_id: str) -> vol.Schema:
+def _gen_room_appliance_schema(entity_id: str) -> vol.Schema:
     """Returns schema for room appliance the filters appliance types based on entity domain."""
     type_options = {
         SWITCH_DOMAIN: SWITCH_APPLIANCE_TYPES,
@@ -342,13 +341,13 @@ def gen_room_appliance_schema(entity_id: str) -> vol.Schema:
     )
 
 
-APPLIANCE_SCHEMA_MAP = {
-    ControlApplianceType.WindowAC: WINDOW_AC_SCHEMA,
-    ControlApplianceType.WindowHeatpump: WINDOW_HP_SCHEMA,
-    ControlApplianceType.SpaceHeater: SPACE_HEATER_SCHEMA,
+_APPLIANCE_SCHEMA_MAP = {
+    ControlApplianceType.WindowAC: _WINDOW_AC_SCHEMA,
+    ControlApplianceType.WindowHeatpump: _WINDOW_HP_SCHEMA,
+    ControlApplianceType.SpaceHeater: _SPACE_HEATER_SCHEMA,
 }
 
-A2C_MAP = {
+_A2C_MAP = {
     ControlApplianceType.BoilerZoneValve: CentralApplianceType.HydroBoiler,
     ControlApplianceType.ThermoStaticRadiatorValve: CentralApplianceType.HydroBoiler,
     ControlApplianceType.HVACCoolCall: CentralApplianceType.AcCompressor,
@@ -357,15 +356,15 @@ A2C_MAP = {
     ControlApplianceType.HeatpumpFanUnit: CentralApplianceType.HeatpumpCompressor,
 }
 
-CENTRAL_APPLIANCE_MAP = {
-    CentralApplianceType.HydroBoiler: BOILER_SCHEMA,
-    CentralApplianceType.AcCompressor: COMPRESSOR_SCHEMA,
-    CentralApplianceType.HvacFurnace: FURNACE_SCHEMA,
-    CentralApplianceType.HeatpumpCompressor: HEATPUMP_COMP_SCHEMA,
+_CENTRAL_APPLIANCE_MAP = {
+    CentralApplianceType.HydroBoiler: _BOILER_SCHEMA,
+    CentralApplianceType.AcCompressor: _COMPRESSOR_SCHEMA,
+    CentralApplianceType.HvacFurnace: _FURNACE_SCHEMA,
+    CentralApplianceType.HeatpumpCompressor: _HEATPUMP_COMP_SCHEMA,
 }
 
 
-def gen_adjacency_schema(rooms) -> tuple[vol.Schema, dict[str, str]]:
+def _gen_adjacency_schema(rooms) -> tuple[vol.Schema, dict[str, str]]:
     """Generates an adjacency matrix schema based on the number of rooms, and associated placeholder data."""
     locations = ["Outside", *rooms]
     placeholders = {f"room{i}": r for i, r in enumerate(locations)}
@@ -385,7 +384,7 @@ def gen_adjacency_schema(rooms) -> tuple[vol.Schema, dict[str, str]]:
     return schema, placeholders
 
 
-def gen_select_central_schema(central_appliances: list[str]) -> vol.Schema:
+def _gen_select_central_schema(central_appliances: list[str]) -> vol.Schema:
     """Dynamically generate a dropdown selecto for central appliances based on ones that have already been added."""
     central_appliances = ["New", *central_appliances]
     return vol.Schema(
@@ -442,7 +441,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_weather_station()
             return await self.async_step_room_sensors()
 
-        return self.async_show_form(step_id="user", data_schema=MAIN_SCHEMA)
+        return self.async_show_form(step_id="user", data_schema=_MAIN_SCHEMA)
 
     async def async_step_adjacency(
         self, user_input: dict[str, Any] | None = None
@@ -459,7 +458,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
             return await self.async_step_room_sensors()
 
-        schema, placeholders = gen_adjacency_schema(self.data[CONF_AREAS])
+        schema, placeholders = _gen_adjacency_schema(self.data[CONF_AREAS])
 
         return self.async_show_form(
             step_id="adjacency",
@@ -479,7 +478,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="weather_station",
-            data_schema=WEATHER_STATION_SCHEMA,
+            data_schema=_WEATHER_STATION_SCHEMA,
         )
 
     async def async_step_room_sensors(
@@ -503,7 +502,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="room_sensors",
-            data_schema=ROOM_SCHEMA,
+            data_schema=_ROOM_SCHEMA,
             description_placeholders={
                 "room": this_room,
             },
@@ -525,7 +524,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="room_appliance_1",
-            data_schema=gen_room_appliance_schema(self.this_appliance),
+            data_schema=_gen_room_appliance_schema(self.this_appliance),
             description_placeholders={
                 "appliance": self.this_appliance,
             },
@@ -537,9 +536,11 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         """Captures configuration of thermal controls in each room."""
 
         schema = (
-            APPLIANCE_SCHEMA_MAP[self.appliance_type]
-            if self.appliance_type in APPLIANCE_SCHEMA_MAP
-            else gen_select_central_schema(list(self.data["central_appliances"].keys()))
+            _APPLIANCE_SCHEMA_MAP[self.appliance_type]
+            if self.appliance_type in _APPLIANCE_SCHEMA_MAP
+            else _gen_select_central_schema(
+                list(self.data["central_appliances"].keys())
+            )
         )
 
         if user_input is not None:
@@ -578,7 +579,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             self.data["room_appliances"][self.this_appliance][
                 CONF_CENTRAL_APPLIANCE
             ] = user_input[CONF_NAME]
-            user_input["appliance_type"] = A2C_MAP[self.appliance_type]
+            user_input["appliance_type"] = _A2C_MAP[self.appliance_type]
             self.data["central_appliances"][user_input[CONF_NAME]] = user_input
 
             if self.room_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
@@ -591,10 +592,10 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="central_appliance",
-            data_schema=CENTRAL_APPLIANCE_MAP[A2C_MAP[self.appliance_type]],
+            data_schema=_CENTRAL_APPLIANCE_MAP[_A2C_MAP[self.appliance_type]],
             description_placeholders={
                 "appliance": self.this_appliance,
-                "central_appliance": str(A2C_MAP[self.appliance_type]),
+                "central_appliance": str(_A2C_MAP[self.appliance_type]),
             },
         )
 
