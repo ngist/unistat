@@ -1,12 +1,15 @@
 import control
 import numpy as np
 import numpy.typing as npt
+from json import JSONEncoder
 
 from enum import Enum, auto
-from typing import Dict, List, Optional, NamedTuple, Tuple, Self
+from typing import Optional, NamedTuple, Self, Final
 
 
 from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
+
+PARAM_VERSION: Final = 1
 
 
 class ParameterType(Enum):
@@ -29,11 +32,11 @@ class ThermalAppliance(NamedTuple):
     monetary_cost: float
     carbon_cost: float
     rated_efficiency: float
-    room_indexes: List[int]
+    room_indexes: list[int]
 
 
 class UniStatModelParams(NamedTuple):
-    rooms: List[str]
+    rooms: list[str]
     has_boiler: bool
     estimate_internal_loads: bool
     adjacency_matrix: npt.ArrayLike
@@ -81,7 +84,7 @@ class UniStatModelParams(NamedTuple):
         return result
 
     @property
-    def tunable_fields(self) -> List[str]:
+    def tunable_fields(self) -> list[str]:
         """Returns list of fields that contain tunable parameters"""
         return [
             "thermal_lag",
@@ -96,7 +99,7 @@ class UniStatModelParams(NamedTuple):
         ]
 
     @property
-    def bounds_map(self) -> Dict[str, Tuple[float, float]]:
+    def bounds_map(self) -> dict[str, tuple[float, float]]:
         """Dict of fields and their corresponding valid ranges"""
         return {
             "thermal_lag": (3600 * 0.25, 3600 * 12),
@@ -186,6 +189,15 @@ class UniStatModelParams(NamedTuple):
             if isinstance(out[k], np.ndarray):
                 out[k] = out[k].tolist()
         return out
+
+
+class UniStatModelParamsEncoder(JSONEncoder):
+    """JSON Encoder for UniStatModelParams"""
+
+    def default(self, obj):
+        if isinstance(obj, UniStatModelParams):
+            return obj.todict()
+        return super().default(obj)
 
 
 class UniStatSystemModel:

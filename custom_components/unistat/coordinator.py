@@ -7,10 +7,8 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.update_coordinator import (
-    DataUpdateCoordinator,
-)
-
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.storage import Store
 from .const import DOMAIN, CONF_AREAS, CONF_CONTROLS, TITLE
 from .thermal_model import UniStatModelParams, UniStatSystemModel
 
@@ -21,6 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 class UnistatData:
     """Data for the UniStat integration."""
 
+    parameter_store: Store
     coordinator_learning: "UnistatLearningCoordinator"
     coordinator_control: "UnistatControlCoordinator"
 
