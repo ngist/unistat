@@ -1,7 +1,8 @@
 import control
 import numpy as np
 import numpy.typing as npt
-from typing import Optional, NamedTuple, Self, Final, Any
+from typing import NamedTuple, Self, Final, Any
+from types import MappingProxyType
 
 from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
 from homeassistant.helpers.storage import Store
@@ -62,9 +63,9 @@ class UniStatModelParams(NamedTuple):
         return result
 
     @property
-    def tunable_fields(self) -> list[str]:
+    def tunable_fields(self) -> tuple[str]:
         """Returns list of fields that contain tunable parameters"""
-        return [
+        return (
             "thermal_lag",
             "room_thermal_masses",
             "thermal_resistances",
@@ -74,22 +75,24 @@ class UniStatModelParams(NamedTuple):
             "radiator_constants",
             "internal_loads",
             "temp_variance",
-        ]
+        )
 
     @property
-    def bounds_map(self) -> dict[str, tuple[float, float]]:
+    def bounds_map(self) -> MappingProxyType[str, tuple[float, float]]:
         """Dict of fields and their corresponding valid ranges"""
-        return {
-            "thermal_lag": (3600 * 0.25, 3600 * 12),
-            "room_thermal_masses": (100, 10000),
-            "boiler_thermal_masses": (100, 2000),
-            "thermal_resistances": (0, 2),
-            "heat_outputs": (0.25, 10),
-            "cooling_outputs": (-10, -0.25),
-            "internal_loads": (0, 1),
-            "radiator_constants": (0.001, 1),
-            "temp_variance": (0, 3),
-        }
+        return MappingProxyType(
+            {
+                "thermal_lag": (3600 * 0.25, 3600 * 12),
+                "room_thermal_masses": (100, 10000),
+                "boiler_thermal_masses": (100, 2000),
+                "thermal_resistances": (0, 2),
+                "heat_outputs": (0.25, 10),
+                "cooling_outputs": (-10, -0.25),
+                "internal_loads": (0, 1),
+                "radiator_constants": (0.001, 1),
+                "temp_variance": (0, 3),
+            }
+        )
 
     @property
     def tunable_params(self) -> npt.NDArray:
@@ -188,22 +191,38 @@ class UniStatModelParams(NamedTuple):
 class UniStatSystemModel:
     def __init__(
         self,
-        model_params: Optional[UniStatModelParams] = None,
+        config_data,
+        model_params: UniStatModelParams | dict[str, Any] | None = None,
     ):
-        self._model_params = model_params
         self._a = None
         self._b = None
         self._c = None
         self._d = None
 
-        # self._update_model()
+        # If no model params are provided initialize the model based on the config
+        if not model_params:
+            self._initialize_model_params(config_data=config_data)
+            # self._update_model()
+            return
 
-    @property
-    def model_params(self):
-        return self._model_params
+        # Munge model parameters into the right type if they are not.
+        if isinstance(model_params, dict):
+            model_params = UniStatModelParams.fromdict(model_params)
 
-    @staticmethod
-    def initialize_state(
+        if not isinstance(model_params, UniStatModelParams):
+            raise TypeError(
+                f"model_params of type: {type(model_params)} is unexpected."
+            )
+
+        # If config data has changed update the model parameters based on the new config while preserving existing data
+        if config_data != model_params.conf_data:
+            # TODO actually preserve data for now just reinitialize
+            self._initialize_state(config_data=config_data)
+            # self._update_model()
+            return
+
+    def _initialize_model_params(
+        self,
         config_data,
         estimate_internal_loads: bool = False,
     ) -> UniStatModelParams:
@@ -271,7 +290,7 @@ class UniStatSystemModel:
         if estimate_internal_loads:
             internal_loads = np.zeros((1, num_rooms))
 
-        return UniStatModelParams(
+        self._model_params = UniStatModelParams(
             conf_data=dict(config_data),
             estimate_internal_loads=estimate_internal_loads,
             room_thermal_masses=room_thermal_masses,
@@ -290,6 +309,10 @@ class UniStatSystemModel:
         self._needs_update = True
         self._ss_model = control.ss(self.A, self.B, self.C, self.D)
         self._needs_update = False
+
+    @property
+    def model_params(self):
+        return self._model_params
 
     @property
     def A(self):

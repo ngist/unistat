@@ -3,7 +3,6 @@
 from datetime import timedelta
 from dataclasses import dataclass
 import logging
-from typing import Any, Optional
 from collections import defaultdict
 
 
@@ -13,7 +12,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.storage import Store
 from .const import DOMAIN, TITLE
-from .thermal_model import UniStatModelParams, UniStatSystemModel
+from .thermal_model import UniStatSystemModel
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,18 +57,6 @@ class UnistatCoordinator(DataUpdateCoordinator):
             # TODO sw_version=  add sw version info,
         )
 
-    def _massage_parameters(self, model_params: Optional[dict[str, Any]]):
-        """Handles non-existent model parameters, and config changes since parameters were last saved."""
-        if model_params:
-            model_params = UniStatModelParams.from_dict(model_params)
-        else:
-            model_params = UniStatSystemModel.initialize_state(self.config_entry.data)
-
-        if self.config_entry.data != model_params.conf_data:
-            model_params = model_params.migrate(self.config_entry.data)
-
-        return model_params
-
     async def _async_setup(self):
         """Set up the coordinator
 
@@ -84,8 +71,9 @@ class UnistatCoordinator(DataUpdateCoordinator):
             self._entity_registry, self.config_entry.entry_id
         )
         model_params = await self.config_entry.runtime_data.parameter_store.async_load()
-        self._model_params = self._massage_parameters(model_params)
-        self._model = UniStatSystemModel(self._model_params)
+        self._model = UniStatSystemModel(
+            self.config_entry.data, model_params=model_params
+        )
 
 
 class UnistatControlCoordinator(UnistatCoordinator):
