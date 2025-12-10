@@ -7,6 +7,7 @@ from typing import Dict
 from .const import (
     CONF_TEMP_ENTITY,
     CONF_HUMIDITY_ENTITY,
+    TITLE,
 )
 from homeassistant.components.climate import (
     ClimateEntity,
@@ -18,7 +19,6 @@ from homeassistant.components.climate import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONF_NAME,
     UnitOfTemperature,
     CONF_TEMPERATURE_UNIT,
     STATE_UNAVAILABLE,
@@ -33,7 +33,6 @@ from homeassistant.core import (
     State,
     callback,
 )
-from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import (
     async_track_state_change_event,
 )
@@ -64,31 +63,20 @@ async def async_setup_entry(
 ) -> None:
     """Initialize UniStat config entry."""
 
-    def format_entity_id(name: str):
-        return name.lower().replace(" ", "_").replace("-", "_")
-
-    registry = er.async_get(hass)
-    # Validate + resolve entity registry id to entity_id
     climate_entities = []
     for room in config_entry.data["room_sensors"]:
-        base_name = config_entry.data[CONF_NAME]
         _LOGGER.info(
             "Configuring thermostat UI for %s",
             room,
         )
-        name = f"{base_name} {room}"
-        entity_id = er.async_validate_entity_id(
-            registry, format_entity_id(f"climate.{name}")
-        )
-        unique_id = f"{config_entry.entry_id}_{room}"
 
         room_sensors = config_entry.data["room_sensors"][room]
+        unique_id = f"{config_entry.entry_id}_{room}"
         climate_entities.append(
             UniStatClimateEntity(
                 hass,
+                name=room,
                 unique_id=unique_id,
-                name=name,
-                wrapped_entity_id=entity_id,
                 temp_unit=config_entry.data[CONF_TEMPERATURE_UNIT],
                 temperature_entity_id=room_sensors[CONF_TEMP_ENTITY],
                 humidity_entity_id=room_sensors.get(CONF_HUMIDITY_ENTITY, None),
@@ -112,9 +100,8 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
     def __init__(
         self,
         hass: HomeAssistant,
-        unique_id: str,
         name: str,
-        wrapped_entity_id: str,
+        unique_id: str,
         temp_unit: UnitOfTemperature,
         temperature_entity_id: str,
         humidity_entity_id: str | None = None,
@@ -125,8 +112,7 @@ class UniStatClimateEntity(ClimateEntity, RestoreEntity):
         super().__init__()
 
         # Set builtin attributes
-        self._wrapped_entity_id = wrapped_entity_id
-        self._attr_name = name
+        self._attr_name = f"{TITLE} {name}"
         self._attr_unique_id = unique_id
         self._attr_temperature_unit = temp_unit
         self._attr_hvac_mode = HVACMode.OFF
