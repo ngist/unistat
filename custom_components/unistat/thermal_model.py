@@ -161,7 +161,6 @@ class UniStatModelParams(NamedTuple):
 
         for tf in self.tunable_fields:
             if np.any((data[tf] < bounds_map[tf][0]) | (data[tf] > bounds_map[tf][1])):
-                print(f"{tf}: bound[{bounds_map[tf]}] data[{data[tf]}]")
                 return False
         return True
 
@@ -344,8 +343,6 @@ class UniStatSystemModel:
             self.model_params.cooling_outputs
         )
 
-        print(num_rooms)
-        print(num_controls)
         b = np.zeros_like((num_rooms + 1, num_controls))
 
         self._b = b
