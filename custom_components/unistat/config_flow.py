@@ -415,6 +415,15 @@ def parse_adjacency(
     return adj_mat
 
 
+def _default_adj(rooms):
+    """Generates a default adjacency matrix"""
+    dims = len(rooms) + 1
+    adj = [[0] * dims] * dims
+    adj[0] = [1] * dims
+    adj[0][0] = 0
+    return adj
+
+
 class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config or options flow for UniStat."""
 
@@ -429,11 +438,14 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             self.data = user_input
             self.data["room_sensors"] = {}
             self.data["central_appliances"] = {}
-            self.data["room_appliances"] = {}
+            self.data["control_appliances"] = {}
             # Return the form of the next step.
             if self.data[CONF_ADJACENCY]:
                 return await self.async_step_adjacency()
-            elif self.data[CONF_WEATHER_STATION]:
+            else:
+                self.data["adjacency"] = _default_adj(user_input[CONF_AREAS])
+
+            if self.data[CONF_WEATHER_STATION]:
                 return await self.async_step_weather_station()
             return await self.async_step_room_sensors()
 
@@ -509,12 +521,12 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Captures configuration of a room appliance."""
 
-        self.room_appliance_index = len(self.data["room_appliances"].keys())
+        self.room_appliance_index = len(self.data["control_appliances"].keys())
         self.this_appliance = self.data[CONF_CONTROLS][self.room_appliance_index]
 
         if user_input is not None:
             # Input is valid, set data.
-            self.data["room_appliances"][self.this_appliance] = user_input
+            self.data["control_appliances"][self.this_appliance] = user_input
             self.appliance_type = user_input[CONF_APPLIANCE_TYPE]
             return await self.async_step_room_appliance_2()
 
@@ -547,7 +559,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             ):
                 return await self.async_step_central_appliance()
 
-            self.data["room_appliances"][self.this_appliance].update(user_input)
+            self.data["control_appliances"][self.this_appliance].update(user_input)
 
             if self.room_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
                 return self.async_create_entry(
@@ -572,7 +584,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             # Input is valid, set data.
-            self.data["room_appliances"][self.this_appliance][
+            self.data["control_appliances"][self.this_appliance][
                 CONF_CENTRAL_APPLIANCE
             ] = user_input[CONF_NAME]
             user_input["appliance_type"] = _A2C_MAP[self.appliance_type]

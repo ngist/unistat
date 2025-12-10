@@ -60,7 +60,7 @@ class ConfigParams(NamedTuple):
 def make_expected(config: ConfigParams):
     expected = config.main_conf.copy()
     expected["room_sensors"] = config.room_sensors.copy()
-    expected["room_appliances"] = config.room_appliances.copy()
+    expected["control_appliances"] = config.room_appliances.copy()
     expected["central_appliances"] = {}
     for app in config.central_appliances:
         app_name = app[1][CONF_NAME]
@@ -70,23 +70,26 @@ def make_expected(config: ConfigParams):
 
     central_counter = 0
     for c in expected[CONF_CONTROLS]:
-        if CONF_CENTRAL_APPLIANCE in expected["room_appliances"][c]:
-            if expected["room_appliances"][c][CONF_CENTRAL_APPLIANCE] == "New":
-                expected["room_appliances"][c][CONF_CENTRAL_APPLIANCE] = (
+        if CONF_CENTRAL_APPLIANCE in expected["control_appliances"][c]:
+            if expected["control_appliances"][c][CONF_CENTRAL_APPLIANCE] == "New":
+                expected["control_appliances"][c][CONF_CENTRAL_APPLIANCE] = (
                     config.central_appliances[central_counter][1]["name"]
                 )
                 central_counter += 1
 
+    rooms = expected[CONF_AREAS]
+    size = len(rooms) + 1
+    adj = np.zeros((size, size), dtype=np.int32)
     if expected[CONF_ADJACENCY]:
-        rooms = expected[CONF_AREAS]
-        size = len(rooms) + 1
-        adj = np.zeros((size, size), dtype=np.int32).tolist()
         room2idx = {r: i for i, r in enumerate(config.main_conf[CONF_AREAS])}
         for k in config.adjacency:
             i = int(k.replace("room", ""))
             for r in config.adjacency[k]:
-                adj[i][room2idx[r] + 1] = 1 if config.adjacency[k][r] else 0
-        expected["adjacency"] = adj
+                adj[i, room2idx[r] + 1] = 1 if config.adjacency[k][r] else 0
+    else:
+        # Create default adjacency
+        adj[0, 1:] = 1
+    expected["adjacency"] = adj.tolist()
     if expected[CONF_WEATHER_STATION]:
         expected["weather_station"] = config.weather_station.copy()
     return expected
