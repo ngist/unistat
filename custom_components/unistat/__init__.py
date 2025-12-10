@@ -7,8 +7,7 @@ from enum import StrEnum
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.storage import Store
-from .thermal_model import PARAM_VERSION, UniStatModelParams
+from .thermal_model import PARAM_VERSION, UniStatModelParams, UniStatModelParamsStore
 from .const import DOMAIN
 
 from .coordinator import (
@@ -35,7 +34,7 @@ class UniStatModelParamsEncoder(JSONEncoder):
 async def async_setup_entry(hass: HomeAssistant, entry: UnistatConfigEntry) -> bool:
     """Set up UniStat from a config entry."""
 
-    parameter_store = Store(
+    parameter_store = UniStatModelParamsStore(
         hass,
         version=PARAM_VERSION,
         key=f"{DOMAIN}/model_params",

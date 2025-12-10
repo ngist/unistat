@@ -1,37 +1,18 @@
 import control
 import numpy as np
 import numpy.typing as npt
-
-from enum import Enum, auto
 from typing import Optional, NamedTuple, Self, Final, Any
 
-
 from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
+from homeassistant.helpers.storage import Store
 
 PARAM_VERSION: Final = 1
 
 
-class ParameterType(Enum):
-    RadiatorConstant = auto()
-
-
-class ApplianceType(Enum):
-    InRoomAppliance = auto()
-    Boiler = auto()
-    HvacFurnace = auto()
-    HvacCompressor = auto()
-
-
-class ThermalAppliance(NamedTuple):
-    entity_id: str
-    appliance_type: ApplianceType
-    variable_power: bool
-    heating_power: float | None
-    cooling_power: float | None
-    monetary_cost: float
-    carbon_cost: float
-    rated_efficiency: float
-    room_indexes: list[int]
+class UniStatModelParamsStore(Store):
+    async def _async_migrate_func(self, old_major_version, old_minor_version, old_data):
+        """Migrate to the new version."""
+        raise NotImplementedError
 
 
 class UniStatModelParams(NamedTuple):
