@@ -21,7 +21,9 @@ async def async_setup_entry(
     """Initialize UniStat BinarySensors."""
     sensors = [
         UniStatBinarySensorEntity(
-            coordinator=config_entry.runtime_data.coordinator, description=desc
+            unique_id_base=config_entry.entry_id,
+            coordinator=config_entry.runtime_data.coordinator_control,
+            description=desc,
         )
         for desc in UNISTAT_BINARY_SENSOR_TYPES
     ]
@@ -32,15 +34,15 @@ async def async_setup_entry(
 UNISTAT_BINARY_SENSOR_TYPES = (
     BinarySensorEntityDescription(
         name="High Temp Alert",
-        key="high_temp",
+        key="high_temp_alert",
         device_class=BinarySensorDeviceClass.HEAT,
-        translation_key="high_temp",
+        translation_key="high_temp_alert",
     ),
     BinarySensorEntityDescription(
         name="Low Temp Alert",
-        key="low_temp",
+        key="low_temp_alert",
         device_class=BinarySensorDeviceClass.COLD,
-        translation_key="low_temp",
+        translation_key="low_temp_alert",
     ),
     BinarySensorEntityDescription(
         name="Update available",
@@ -89,6 +91,7 @@ class UniStatBinarySensorEntity(
 
     def __init__(
         self,
+        unique_id_base: str,
         coordinator: UnistatControlCoordinator,
         description: BinarySensorEntityDescription,
     ) -> None:
@@ -96,7 +99,7 @@ class UniStatBinarySensorEntity(
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_device_info = coordinator.device_info
-        self._attr_unique_id = f"{coordinator.location_key}-{description.key}".lower()
+        self._attr_unique_id = f"{unique_id_base}-{description.key}".lower()
 
     @callback
     def _handle_coordinator_update(self):

@@ -11,7 +11,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .const import DOMAIN, CONF_AREAS, CONF_CONTROLS
+from .const import DOMAIN, CONF_AREAS, CONF_CONTROLS, TITLE
 from .thermal_model import UniStatModelParams, UniStatSystemModel
 
 _LOGGER = logging.getLogger(__name__)
@@ -131,7 +131,7 @@ class UnistatLearningCoordinator(DataUpdateCoordinator):
 
 def _get_device_info():
     return DeviceInfo(
-        name="UniStatCoordinator",
+        name=TITLE,
         entry_type=DeviceEntryType.SERVICE,
         identifiers={(DOMAIN,)},
         # TODO sw_version=  add sw version info,

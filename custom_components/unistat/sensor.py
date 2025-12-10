@@ -21,7 +21,9 @@ async def async_setup_entry(
     """Initialize UniStat Sensors."""
     sensors = [
         UnistatSensorEntity(
-            coordinator=config_entry.runtime_data.coordinator_control, description=desc
+            unique_id_base=config_entry.entry_id,
+            coordinator=config_entry.runtime_data.coordinator_control,
+            description=desc,
         )
         for desc in UNISTAT_SENSOR_TYPES
     ]
@@ -63,6 +65,7 @@ class UnistatSensorEntity(CoordinatorEntity[UnistatControlCoordinator], SensorEn
 
     def __init__(
         self,
+        unique_id_base: str,
         coordinator: UnistatControlCoordinator,
         description: SensorEntityDescription,
     ) -> None:
@@ -70,7 +73,7 @@ class UnistatSensorEntity(CoordinatorEntity[UnistatControlCoordinator], SensorEn
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_device_info = coordinator.device_info
-        self._attr_unique_id = f"{coordinator.location_key}-{description.key}".lower()
+        self._attr_unique_id = f"{unique_id_base}-{description.key}".lower()
 
     @callback
     def _handle_coordinator_update(self):

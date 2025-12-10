@@ -26,7 +26,7 @@ from .config_gen import (
     make_spaceheater,
 )
 
-PLATFORMS = [CLIMATE_DOMAIN]
+PLATFORMS = [CLIMATE_DOMAIN, SENSOR_DOMAIN, BINARY_SENSOR_DOMAIN]
 
 
 @pytest.fixture
@@ -61,10 +61,8 @@ def eids(mydata):
 @pytest.fixture
 def friendly_names(mydata):
     climate_names = [f"{TITLE} {room}" for room in mydata[CONF_AREAS]]
-    sensor_names = [f"{SENSOR_DOMAIN}.{TITLE} {s.name}" for s in UNISTAT_SENSOR_TYPES]
-    binary_sensor_names = [
-        f"{BINARY_SENSOR_DOMAIN}.{TITLE} {s.name}" for s in UNISTAT_BINARY_SENSOR_TYPES
-    ]
+    sensor_names = [f"{TITLE} {s.name}" for s in UNISTAT_SENSOR_TYPES]
+    binary_sensor_names = [f"{TITLE} {s.name}" for s in UNISTAT_BINARY_SENSOR_TYPES]
 
     return {
         CLIMATE_DOMAIN: climate_names,
