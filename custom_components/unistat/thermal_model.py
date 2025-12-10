@@ -181,6 +181,13 @@ class UniStatModelParams(NamedTuple):
         upper_triangle = np.array_equal(np.triu(adjacency_matrix, 1), adjacency_matrix)
         return ones_and_zeros and upper_triangle and right_size
 
+    def todict(self):
+        out = self._asdict()
+        for k in out:
+            if isinstance(out[k], np.ndarray):
+                out[k] = out[k].tolist()
+        return out
+
 
 class UniStatSystemModel:
     def __init__(
