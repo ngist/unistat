@@ -1,10 +1,9 @@
 import control
 import numpy as np
 import numpy.typing as npt
-from json import JSONEncoder
 
 from enum import Enum, auto
-from typing import Optional, NamedTuple, Self, Final
+from typing import Optional, NamedTuple, Self, Final, Any
 
 
 from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
@@ -36,19 +35,17 @@ class ThermalAppliance(NamedTuple):
 
 
 class UniStatModelParams(NamedTuple):
-    rooms: list[str]
-    has_boiler: bool
+    conf_data: dict[str, Any]
     estimate_internal_loads: bool
-    adjacency_matrix: npt.ArrayLike
-    thermal_lag: npt.ArrayLike
-    room_thermal_masses: npt.ArrayLike
-    thermal_resistances: npt.ArrayLike
-    heat_outputs: npt.ArrayLike
-    cooling_outputs: npt.ArrayLike
-    radiator_constants: npt.ArrayLike
-    boiler_thermal_masses: npt.ArrayLike
-    internal_loads: npt.ArrayLike
-    temp_variance: npt.ArrayLike
+    thermal_lag: npt.NDArray
+    room_thermal_masses: npt.NDArray
+    thermal_resistances: npt.NDArray
+    heat_outputs: npt.NDArray
+    cooling_outputs: npt.NDArray
+    radiator_constants: npt.NDArray
+    boiler_thermal_masses: npt.NDArray
+    internal_loads: npt.NDArray
+    temp_variance: npt.NDArray
 
     def from_params(self, parameters: npt.NDArray) -> Self:
         """Take in an array and return a new UniStatModelParams.
@@ -169,12 +166,20 @@ class UniStatModelParams(NamedTuple):
 
     @property
     def num_rooms(self) -> int:
-        return len(self.rooms)
+        return len(self.conf_data[CONF_AREAS])
 
     @property
     def valid_adjacency(self) -> bool:
         # Checks that an supplied adjacency matrix conforms to the expected form
         return self.is_valid_adjacency(self.adjacency_matrix, self.num_rooms)
+
+    @property
+    def adjacency_matrix(self) -> npt.NDArray:
+        return np.array(self.conf_data["adjacency"])
+
+    @property
+    def has_boiler(self) -> bool:
+        return len(self.boiler_thermal_masses) > 0
 
     @staticmethod
     def is_valid_adjacency(adjacency_matrix: npt.NDArray, num_rooms: int):
@@ -190,14 +195,13 @@ class UniStatModelParams(NamedTuple):
                 out[k] = out[k].tolist()
         return out
 
+    @staticmethod
+    def fromdict(data: dict[str, Any]) -> Self:
+        data = data.copy()
+        for k in UniStatModelParams.tunable_fields():
+            data[k] = np.array(data[k])
 
-class UniStatModelParamsEncoder(JSONEncoder):
-    """JSON Encoder for UniStatModelParams"""
-
-    def default(self, obj):
-        if isinstance(obj, UniStatModelParams):
-            return obj.todict()
-        return super().default(obj)
+        return UniStatModelParams(**data)
 
 
 class UniStatSystemModel:
@@ -287,10 +291,8 @@ class UniStatSystemModel:
             internal_loads = np.zeros((1, num_rooms))
 
         return UniStatModelParams(
-            rooms=rooms,
-            has_boiler=True if len(boiler_thermal_masses) else False,
+            conf_data=dict(config_data),
             estimate_internal_loads=estimate_internal_loads,
-            adjacency_matrix=adjacency_matrix,
             room_thermal_masses=room_thermal_masses,
             boiler_thermal_masses=boiler_thermal_masses,
             thermal_resistances=thermal_resistances,

@@ -42,7 +42,8 @@ def is_jsonable(diagnostics):
     try:
         json.dumps(diagnostics)
         return True
-    except (TypeError, OverflowError):
+    except (TypeError, OverflowError) as e:
+        print(e)
         return False
 
 

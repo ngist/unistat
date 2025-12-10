@@ -1,12 +1,14 @@
 """The UniStat integration."""
 
 import asyncio
+from json import JSONEncoder
+from enum import StrEnum
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
-from .thermal_model import PARAM_VERSION, UniStatModelParamsEncoder
+from .thermal_model import PARAM_VERSION, UniStatModelParams
 from .const import DOMAIN
 
 from .coordinator import (
@@ -19,6 +21,17 @@ from .coordinator import (
 PLATFORMS: tuple[Platform] = (Platform.CLIMATE, Platform.BINARY_SENSOR, Platform.SENSOR)
 
 
+class UniStatModelParamsEncoder(JSONEncoder):
+    """JSON Encoder for UniStatModelParams"""
+
+    def default(self, obj):
+        if isinstance(obj, UniStatModelParams):
+            return obj.todict()
+        if isinstance(obj, StrEnum):
+            return str(obj)
+        return super().default(obj)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: UnistatConfigEntry) -> bool:
     """Set up UniStat from a config entry."""
 
@@ -29,16 +42,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: UnistatConfigEntry) -> b
         encoder=UniStatModelParamsEncoder(),
     )
     control_coordinator = UnistatControlCoordinator(hass, entry)
-    learning_coordinator = UnistatLearningCoordinator(hass, entry, control_coordinator)
+    learning_coordinator = UnistatLearningCoordinator(hass, entry)
 
     entry.runtime_data = UnistatData(
         parameter_store=parameter_store,
         coordinator_control=control_coordinator,
         coordinator_learning=learning_coordinator,
     )
-
-    # Parameter store is needed by the controllers so set it up first
-    await parameter_store.async_load()
 
     await asyncio.gather(
         control_coordinator.async_config_entry_first_refresh(),

@@ -2,15 +2,38 @@ import pytest
 import numpy as np
 
 from custom_components.unistat.thermal_model import UniStatModelParams
+from homeassistant.const import CONF_NAME
+
+
+from .config_gen import (
+    ConfigParams,
+    make_expected,
+    make_main_conf,
+    make_multiroom_sensors,
+    make_spaceheater,
+    make_zonevalve,
+    make_boiler,
+)
+
+
+def conf_simple():
+    rooms = ["kitchen", "bedroom", "living_room"]
+    controls = ["switch.spaceheater1", "switch.spaceheater2"]
+    params = ConfigParams(
+        main_conf=make_main_conf(rooms, controls),
+        room_sensors=make_multiroom_sensors(rooms),
+        room_appliances={
+            c: make_spaceheater([rooms[i]]) for i, c in enumerate(controls)
+        },
+    )
+    return make_expected(params)
 
 
 MODEL_PARAMS_MIN = UniStatModelParams(
-    rooms=["living_room", "kitchen"],
-    has_boiler=False,
+    conf_data=conf_simple(),
     estimate_internal_loads=False,
-    adjacency_matrix=np.array([[0, 1, 1], [0, 0, 1], [0, 0, 0]]),
     thermal_lag=np.array([3600 * 6]),
-    room_thermal_masses=np.array([1000, 2000]),
+    room_thermal_masses=np.array([1000, 1500, 2000]),
     thermal_resistances=np.array([1, 1.5, 2]),
     heat_outputs=np.array([1.1, 2.1]),
     cooling_outputs=np.array([-1, -2]),
@@ -20,29 +43,30 @@ MODEL_PARAMS_MIN = UniStatModelParams(
     temp_variance=np.array([0.1, 0.2]),
 )
 
-MODEL_PARAMS_FULL = UniStatModelParams(
-    rooms=["living_room", "kitchen"],
-    has_boiler=True,
-    estimate_internal_loads=True,
-    adjacency_matrix=np.array([[0, 1, 1], [0, 0, 1], [0, 0, 0]]),
-    thermal_lag=np.array([3600 * 6]),
-    room_thermal_masses=np.array([1000, 2000]),
-    thermal_resistances=np.array([1, 1.5, 2]),
-    heat_outputs=np.array([1.1, 2.1]),
-    cooling_outputs=np.array([-1, -2]),
-    boiler_thermal_masses=np.array([100, 101]),
-    radiator_constants=np.array([0.1, 0.2]),
-    internal_loads=np.array([0.3, 0.5]),
-    temp_variance=np.array([0.1, 0.2]),
-)
+
+def conf_with_boiler():
+    rooms = ["kitchen", "bedroom", "living_room"]
+    controls = ["switch.zone1_valve", "switch.zone2_valve"]
+    boiler = make_boiler()
+    params = ConfigParams(
+        main_conf=make_main_conf(rooms, controls),
+        room_sensors=make_multiroom_sensors(rooms),
+        room_appliances={
+            c: make_zonevalve(
+                [rooms[i]], central_appliance=(boiler[1][CONF_NAME] if i > 0 else None)
+            )
+            for i, c in enumerate(controls)
+        },
+        central_appliances=[boiler],
+    )
+    return make_expected(params)
+
 
 MODEL_PARAMS_NO_LOADS = UniStatModelParams(
-    rooms=["living_room", "kitchen"],
-    has_boiler=True,
+    conf_data=conf_with_boiler(),
     estimate_internal_loads=False,
-    adjacency_matrix=np.array([[0, 1, 1], [0, 0, 1], [0, 0, 0]]),
     thermal_lag=np.array([3600 * 6]),
-    room_thermal_masses=np.array([1000, 2000]),
+    room_thermal_masses=np.array([1000, 1500, 2000]),
     thermal_resistances=np.array([1, 1.5, 2]),
     heat_outputs=np.array([1.1, 2.1]),
     cooling_outputs=np.array([-1, -2]),
@@ -53,18 +77,30 @@ MODEL_PARAMS_NO_LOADS = UniStatModelParams(
 )
 
 MODEL_PARAMS_NO_BOILER = UniStatModelParams(
-    rooms=["living_room", "kitchen"],
-    has_boiler=False,
+    conf_data=conf_simple(),
     estimate_internal_loads=True,
-    adjacency_matrix=np.array([[0, 1, 1], [0, 0, 1], [0, 0, 0]]),
     thermal_lag=np.array([3600 * 6]),
-    room_thermal_masses=np.array([1000, 2000]),
+    room_thermal_masses=np.array([1000, 1500, 2000]),
     thermal_resistances=np.array([1, 1.5, 2]),
     heat_outputs=np.array([1.1, 2.1]),
     cooling_outputs=np.array([-1, -2]),
     boiler_thermal_masses=np.array([]),
     radiator_constants=np.array([]),
-    internal_loads=np.array([0.3, 0.5]),
+    internal_loads=np.array([0.3, 0.4, 0.5]),
+    temp_variance=np.array([0.1, 0.2]),
+)
+
+MODEL_PARAMS_FULL = UniStatModelParams(
+    conf_data=conf_with_boiler(),
+    estimate_internal_loads=True,
+    thermal_lag=np.array([3600 * 6]),
+    room_thermal_masses=np.array([1000, 1500, 2000]),
+    thermal_resistances=np.array([1, 1.5, 2]),
+    heat_outputs=np.array([1.1, 2.1]),
+    cooling_outputs=np.array([-1, -2]),
+    boiler_thermal_masses=np.array([100, 101]),
+    radiator_constants=np.array([0.1, 0.2]),
+    internal_loads=np.array([0.3, 0.4, 0.5]),
     temp_variance=np.array([0.1, 0.2]),
 )
 
@@ -99,7 +135,7 @@ class TestUniStatModelParams_Nominal:
         assert input.in_bounds
 
     def test_num_rooms(self, input: UniStatModelParams):
-        assert input.num_rooms == 2
+        assert input.num_rooms == 3
 
     def test_valid_adjacency(self, input: UniStatModelParams):
         assert input.valid_adjacency
@@ -125,15 +161,15 @@ class TestUniStatModelParams_OffNominal:
     @pytest.mark.parametrize(
         "adjacency",
         [
-            np.array([[0, 1, 2], [0, 0, 1], [0, 0, 0]]),  # Invalid value
-            np.array([[0, 1, 1], [1, 0, 1], [0, 0, 0]]),  # Not upper triangular
-            np.array([[0, 1], [0, 0], [0, 0]]),  # Invalid Shape
-            np.array([[1, 1, 1], [0, 0, 1], [0, 0, 0]]),  # Has diagonal val
+            [[0, 1, 2], [0, 0, 1], [0, 0, 0]],  # Invalid value
+            [[0, 1, 1], [1, 0, 1], [0, 0, 0]],  # Not upper triangular
+            [[0, 1], [0, 0], [0, 0]],  # Invalid Shape
+            [[1, 1, 1], [0, 0, 1], [0, 0, 0]],  # Has diagonal val
         ],
     )
     def test_valid_adjacency(self, adjacency):
         data = MODEL_PARAMS_FULL._asdict()
-        data["adjacency_matrix"] = adjacency
+        data["conf_data"]["adjacency"] = adjacency
         mp = UniStatModelParams(**data)
         assert not mp.valid_adjacency
         assert not mp.self_consistent
@@ -141,8 +177,8 @@ class TestUniStatModelParams_OffNominal:
     @pytest.mark.parametrize(
         "key,val",
         [
-            ("internal_loads", np.array([0.1, 0.2, 0.3])),
-            ("thermal_resistances", np.array([1, 1.5])),
+            ("internal_loads", np.array([0.1, 0.2])),
+            ("thermal_resistances", np.array([1, 1.5, 2])),
         ],
     )
     def test_self_consistent(self, key, val):
