@@ -8,6 +8,7 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant.components.climate import ClimateEntityFeature, HVACMode
+from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
@@ -19,7 +20,7 @@ from .config_gen import (
     make_spaceheater,
 )
 
-PLATFORMS = ["climate"]
+PLATFORMS = [CLIMATE_DOMAIN]
 
 
 @pytest.fixture
@@ -41,11 +42,12 @@ async def test_setup_and_remove_config_entry(
     hass: HomeAssistant,
     entity_registry: er.EntityRegistry,
     platform: str,
-    mydata,
+    mydata: ConfigParams,
 ) -> None:
     """Test setting up and removing a config entry."""
     entity_ids = [f"{platform}.my_unistat_{room}" for room in mydata[CONF_AREAS]]
     friendly_names = [f"My UniStat {room}" for room in mydata[CONF_AREAS]]
+
     # Setup the config entry
     config_entry = MockConfigEntry(
         data=mydata,

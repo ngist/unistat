@@ -6,6 +6,9 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, NamedTuple, Tuple, Self
 
 
+from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
+
+
 class ParameterType(Enum):
     RadiatorConstant = auto()
 
@@ -190,14 +193,15 @@ class UniStatSystemModel:
         self._c = None
         self._d = None
 
-        self._update_model()
+        # self._update_model()
+
+    @property
+    def model_params(self):
+        return self._model_params
 
     @staticmethod
     def initialize_state(
-        rooms: List[str],
-        room_conf: List[Dict[str, List[int]]],
-        adjacency_matrix: Optional[List] = None,
-        boiler_zone_entities: List[str] = None,
+        config_data,
         estimate_internal_loads: bool = False,
     ) -> UniStatModelParams:
         """Generates a UniStatModelParams with default values"""
@@ -217,7 +221,7 @@ class UniStatSystemModel:
         DEFAULT_RESISTANCE_INSIDE = (
             10 * UNINSULATED_U_FACTOR / 1000
         )  # ~10sq meter separating drywall with no insulation
-        # DEFAULT_RADIATOR_CONSTANT = 0.03
+        DEFAULT_RADIATOR_CONSTANT = 0.03
         DEFAULT_THERMAL_LAG = 3600 * 6  # 6 hours
 
         # In kW
@@ -228,25 +232,26 @@ class UniStatSystemModel:
         # DEFAULT_HEATPUMP_HEATING = 4.22  # 14,400 BTU/hr
         # DEFAULT_CENTRAL_BOILER_HEAT = 41  # 140,000 BTU/hr
 
+        rooms = config_data[CONF_AREAS]
         num_rooms = len(rooms)
         temp_variance = np.zeros(num_rooms)
         room_thermal_masses = np.ones(num_rooms) * DEFAULT_THERMAL_MASS
-        boiler_thermal_masses = np.array([])
-        if len(boiler_zone_entities) > 0:
-            has_boiler = True
-            boiler_thermal_masses = (
-                np.ones(len(boiler_zone_entities))
-                * DEFAULT_BOILER_MASS
-                / len(boiler_zone_entities)
-            )
 
-        if adjacency_matrix is None:
-            # If not specified assume all rooms are adjacent to the outside and each other.
-            adjacency_matrix = np.ones((num_rooms + 1, num_rooms + 1))
-            adjacency_matrix = np.triu(adjacency_matrix, 1)
-        else:
-            adjacency_matrix = np.array(adjacency_matrix)
-        assert UniStatSystemModel.valid_adjacency(adjacency_matrix)
+        boiler_thermal_masses = []
+        radiator_constants = []
+        for c in config_data[CONF_CONTROLS]:
+            control_app = config_data["control_appliances"][c]
+            if control_app[CONF_APPLIANCE_TYPE] in [
+                ControlApplianceType.BoilerZoneCall,
+                ControlApplianceType.ThermoStaticRadiatorValve,
+            ]:
+                boiler_thermal_masses.append(DEFAULT_BOILER_MASS)
+                radiator_constants.append(DEFAULT_RADIATOR_CONSTANT)
+        boiler_thermal_masses = np.array(boiler_thermal_masses)
+
+        # TODO Populate heating and cooling outputs
+
+        adjacency_matrix = np.array(config_data["adjacency"], dtype=bool)
 
         outside_resistances = (
             np.ones(np.count_nonzero(adjacency_matrix[0, :]))
@@ -256,37 +261,27 @@ class UniStatSystemModel:
             np.ones(np.count_nonzero(adjacency_matrix[1:, :]))
             * DEFAULT_RESISTANCE_INSIDE
         )
-        thermal_resistances = np.concatenate(outside_resistances, inside_resistances)
+        thermal_resistances = np.concatenate((outside_resistances, inside_resistances))
         assert np.size(thermal_resistances) == np.count_nonzero(adjacency_matrix)
 
         internal_loads = np.array([])
         if estimate_internal_loads:
             internal_loads = np.zeros((1, num_rooms))
 
-        room_conf = room_conf
-
-        # #TODO
-        # self.radiator_constants = np.ones()*DEFAULT_RADIATOR_CONSTANT
-        # self.heat_outputs = np.ones()*DEFAULT_HVAC_HEAT
-        # self.cooling_outputs = np.ones()*DEFAULT_HVAC_COOL
-
-        # # for room in room_conf:
-
-        # # self.radiator_indexes = list(radiator_rooms)
-        # # self.radiator_costants = np.ones_like(self.radiator_indexes)*DEFAULT_RADIATOR_CONSTANT
-        # # self.hvac_indexes = list(hvac_rooms)
-        # # self.hvac_constants =
-
         return UniStatModelParams(
             rooms=rooms,
-            has_boiler=has_boiler,
+            has_boiler=True if len(boiler_thermal_masses) else False,
             estimate_internal_loads=estimate_internal_loads,
             adjacency_matrix=adjacency_matrix,
             room_thermal_masses=room_thermal_masses,
             boiler_thermal_masses=boiler_thermal_masses,
+            thermal_resistances=thermal_resistances,
+            radiator_constants=radiator_constants,
             internal_loads=internal_loads,
             temp_variance=temp_variance,
             thermal_lag=DEFAULT_THERMAL_LAG,
+            heat_outputs=np.array([]),
+            cooling_outputs=np.array([]),
         )
 
     def _update_model(self):
@@ -303,26 +298,28 @@ class UniStatSystemModel:
         if self._a and not self._needs_update:
             return self._a
 
-        resistance_matrix = np.zeros_like(self.adjacency_matrix)
-        resistance_matrix[self.adjacency_matrix] = self.thermal_resistances
+        resistance_matrix = np.zeros_like(self.model_params.adjacency_matrix)
+        resistance_matrix[self.model_params.adjacency_matrix] = (
+            self.model_params.thermal_resistances
+        )
         resistance_matrix = resistance_matrix + np.flip(resistance_matrix)
 
         # populate eye
         eye_vals = -np.sum(resistance_matrix, axis=0) * -1
-        eye = np.eye(resistance_matrix.shape[0])
+        eye = np.eye(resistance_matrix.shape[0], dtype=bool)
         a = resistance_matrix
         a[eye] = eye_vals
 
         # First row is the outside, outside thermal mass is effectively infinite so zero the first row
         a[0, :] = np.zeros_like(a[0, :])
 
-        if self.estimate_internal_loads:
+        if self.model_params.estimate_internal_loads:
             # If there's a load in the room then add a final column to include this static load
-            a = np._c[a, self.internal_loads]
+            a = np._c[a, self.model_params.internal_loads]
 
         # Divide the other rows by the thermal mass
-        a[1:, :] = a[1:, :] / self.room_thermal_masses
-
+        temp = a[1:, :].T / self.model_params.room_thermal_masses
+        a[1:, :] = temp.T
         self._a = a
 
         return self._a
@@ -335,7 +332,14 @@ class UniStatSystemModel:
         if self._b and not self._needs_update:
             return self._b
 
-        b = np.zeros_like((self.num_rooms + 1, len(self.thermal_appliances)))
+        num_rooms = len(self.model_params.rooms)
+        num_controls = len(self.model_params.heat_outputs) + len(
+            self.model_params.cooling_outputs
+        )
+
+        print(num_rooms)
+        print(num_controls)
+        b = np.zeros_like((num_rooms + 1, num_controls))
 
         self._b = b
         return self._b

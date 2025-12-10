@@ -138,15 +138,11 @@ CONFIG_FLOWS = [
     _NOMINAL_NONTRIV_ADJ_CONF,
 ]
 
-PLATFORMS = ["climate"]
 
-
-@pytest.mark.parametrize("platform", PLATFORMS)
 @pytest.mark.parametrize("config", CONFIG_FLOWS)
 async def test_nominal_config_flow(
     hass: HomeAssistant,
     mock_setup_entry: AsyncMock,
-    platform,
     config,
 ) -> None:
     """Test the minimal config flow with no optional inputs."""

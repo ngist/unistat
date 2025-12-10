@@ -1,33 +1,40 @@
 """The UniStat integration."""
 
-from __future__ import annotations
+import asyncio
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-PLATFORMS: tuple[Platform] = (Platform.CLIMATE,)
+from .coordinator import (
+    UnistatLearningCoordinator,
+    UnistatControlCoordinator,
+    UnistatData,
+    UnistatConfigEntry,
+)
+
+PLATFORMS: tuple[Platform] = (Platform.CLIMATE, Platform.BINARY_SENSOR, Platform.SENSOR)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: UnistatConfigEntry) -> bool:
     """Set up UniStat from a config entry."""
-    # store an object for your platforms to access
-    entry.runtime_data = {}
 
-    # TODO Optionally validate config entry options before setting up platform
+    control_coordinator = UnistatControlCoordinator(hass, entry)
+    learning_coordinator = UnistatLearningCoordinator(hass, entry, control_coordinator)
+
+    await asyncio.gather(
+        control_coordinator.async_config_entry_first_refresh(),
+        learning_coordinator.async_config_entry_first_refresh(),
+    )
+
+    entry.runtime_data = UnistatData(
+        coordinator_control=control_coordinator,
+        coordinator_learning=learning_coordinator,
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # TODO Remove if the integration does not have an options flow
-    # entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
-
     return True
-
-
-# TODO Remove if the integration does not have an options flow
-# async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-#     """Update listener, called when the config entry options are changed."""
-#     await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

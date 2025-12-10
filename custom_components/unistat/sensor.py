@@ -1,37 +1,79 @@
 """Sensor platform for UniStat integration."""
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_ENTITY_ID
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorDeviceClass,
+    SensorEntityDescription,
+)
+from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .coordinator import UnistatConfigEntry, UnistatControlCoordinator
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: UnistatConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Initialize UniStat config entry."""
-    registry = er.async_get(hass)
-    # Validate + resolve entity registry id to entity_id
-    entity_id = er.async_validate_entity_id(
-        registry, config_entry.options[CONF_ENTITY_ID]
-    )
-    # TODO Optionally validate config entry options before creating entity
-    name = config_entry.title
-    unique_id = config_entry.entry_id
+    """Initialize UniStat Sensors."""
+    sensors = [
+        UnistatSensorEntity(
+            coordinator=config_entry.runtime_data.coordinator_control, description=desc
+        )
+        for desc in UNISTAT_SENSOR_TYPES
+    ]
 
-    async_add_entities([UniStatSensorEntity(unique_id, name, entity_id)])
+    async_add_entities(sensors)
 
 
-class UniStatSensorEntity(SensorEntity):
-    """unistat Sensor."""
+UNISTAT_SENSOR_TYPES = (
+    SensorEntityDescription(
+        name="Control Error",
+        key="control_error",
+        translation_key="control_error",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        name="Daily Control Error",
+        key="daily_control_error",
+        translation_key="daily_control_error",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        name="Daily Cost",
+        key="daily_cost",
+        device_class=SensorDeviceClass.MONETARY,
+        translation_key="daily_cost",
+    ),
+    SensorEntityDescription(
+        name="Most Demanding Room",
+        key="most_demanding_room",
+        translation_key="most_demanding_room",
+    ),
+)
 
-    def __init__(self, unique_id: str, name: str, wrapped_entity_id: str) -> None:
+
+class UnistatSensorEntity(CoordinatorEntity[UnistatControlCoordinator], SensorEntity):
+    """Unistat Sensor."""
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: UnistatControlCoordinator,
+        description: SensorEntityDescription,
+    ) -> None:
         """Initialize unistat Sensor."""
-        super().__init__()
-        self._wrapped_entity_id = wrapped_entity_id
-        self._attr_name = name
-        self._attr_unique_id = unique_id
+        super().__init__(coordinator)
+        self.entity_description = description
+        self._attr_device_info = coordinator.device_info
+        self._attr_unique_id = f"{coordinator.location_key}-{description.key}".lower()
+
+    @callback
+    def _handle_coordinator_update(self):
+        """Handle data update."""
+        self._sensor_data = self.coordinator.data[self.entity_description.key]
+        self.async_write_ha_state()
