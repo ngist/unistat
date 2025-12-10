@@ -3,6 +3,7 @@
 from enum import StrEnum
 
 DOMAIN = "unistat"
+TITLE = "UniStat"
 
 # General Purpose (used multiple forms)
 CONF_TEMP_ENTITY = "temp_entity"

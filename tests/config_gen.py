@@ -253,7 +253,6 @@ def make_hp_compressor(name: str = "compressor", has_meter: bool = False):
 def make_main_conf(
     rooms: list[str],
     controls: list[str],
-    name: str = "My UniStat",
     temp_unit: UnitOfTemperature = UnitOfTemperature.FAHRENHEIT,
     control_mode: ControlMode = ControlMode.COMFORT,
     weather_entity: str = "weather.forecast_home",
@@ -263,7 +262,6 @@ def make_main_conf(
     electric_price: Optional[str] = None,
 ):
     conf = {
-        CONF_NAME: name,
         CONF_AREAS: rooms,
         CONF_CONTROLS: controls,
         CONF_WEATHER_ENTITY: weather_entity,

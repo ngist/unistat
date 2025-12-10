@@ -54,6 +54,7 @@ from .const import (
     CLIMATE_APPLIANCE_TYPES,
     CONF_WEATHER_STATION,
     DOMAIN,
+    TITLE,
     ControlMode,
     ControlApplianceType,
     CentralApplianceType,
@@ -61,7 +62,6 @@ from .const import (
 
 _MAIN_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_NAME): selector.TextSelector(),
         vol.Required(CONF_AREAS): selector.AreaSelector(
             selector.AreaSelectorConfig(multiple=True)
         ),
@@ -562,9 +562,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             self.data["control_appliances"][self.this_appliance].update(user_input)
 
             if self.room_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
-                return self.async_create_entry(
-                    title=self.data[CONF_NAME], data=self.data
-                )
+                return self.async_create_entry(title=TITLE, data=self.data)
 
             # Return the form of the next step.
             return await self.async_step_room_appliance_1()
@@ -591,9 +589,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             self.data["central_appliances"][user_input[CONF_NAME]] = user_input
 
             if self.room_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
-                return self.async_create_entry(
-                    title=self.data[CONF_NAME], data=self.data
-                )
+                return self.async_create_entry(title=TITLE, data=self.data)
 
             # Return the form of the next step.
             return await self.async_step_room_appliance_1()

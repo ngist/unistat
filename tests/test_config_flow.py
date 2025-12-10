@@ -11,6 +11,7 @@ from custom_components.unistat.const import (
     CONF_CENTRAL_APPLIANCE,
     CONF_APPLIANCE_TYPE,
     DOMAIN,
+    TITLE,
 )
 import pytest
 
@@ -190,7 +191,7 @@ async def test_nominal_config_flow(
     expected = make_expected(config)
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == "My UniStat"
+    assert result["title"] == TITLE
     assert result["data"] == expected
     assert result["options"] == {}
     assert len(mock_setup_entry.mock_calls) == 1
@@ -198,7 +199,7 @@ async def test_nominal_config_flow(
     config_entry = hass.config_entries.async_entries(DOMAIN)[0]
     assert config_entry.data == expected
     assert config_entry.options == {}
-    assert config_entry.title == "My UniStat"
+    assert config_entry.title == TITLE
 
 
 # DUPLICATE_CASES = [
