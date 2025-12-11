@@ -39,6 +39,7 @@ class UniStatModelParams:
 
         The input parameters must match the size and ordering of the result of to_vector().
         """
+
         data = self.asdict()
 
         first = 0
@@ -101,7 +102,7 @@ class UniStatModelParams:
 
         constraints_list = []
         for tf in self.tunable_fields:
-            constraints_list.extend([bounds_map[tf]] * np.size(data[tf]))
+            constraints_list.extend([bounds_map[tf]] * len(data[tf]))
 
         return np.array(constraints_list)
 
@@ -154,26 +155,11 @@ class UniStatModelParams:
         return len(self.boiler_thermal_masses) > 0
 
     @staticmethod
-    def is_valid_adjacency(adjacency_matrix: npt.NDArray, num_rooms: int):
+    def is_valid_adjacency(adjacency_matrix: npt.ArrayLike, num_rooms: int):
         right_size = np.shape(adjacency_matrix) == (num_rooms + 1, num_rooms + 1)
         ones_and_zeros = np.all((adjacency_matrix == 0) | (adjacency_matrix == 1))
         upper_triangle = np.array_equal(np.triu(adjacency_matrix, 1), adjacency_matrix)
         return ones_and_zeros and upper_triangle and right_size
-
-    def todict(self):
-        out = self.asdict()
-        for k in out:
-            if isinstance(out[k], np.ndarray):
-                out[k] = out[k].tolist()
-        return out
-
-    @staticmethod
-    def fromdict(data: dict[str, Any]) -> Self:
-        data = data.copy()
-        for k in UniStatModelParams.tunable_fields():
-            data[k] = np.array(data[k])
-
-        return UniStatModelParams(**data)
 
 
 class UniStatSystemModel:
@@ -244,8 +230,8 @@ class UniStatSystemModel:
 
         rooms = config_data[CONF_AREAS]
         num_rooms = len(rooms)
-        temp_variance = np.zeros(num_rooms)
-        room_thermal_masses = np.ones(num_rooms) * DEFAULT_THERMAL_MASS
+        temp_variance = [0.0] * num_rooms
+        room_thermal_masses = [DEFAULT_THERMAL_MASS] * num_rooms
 
         boiler_thermal_masses = []
         radiator_constants = []
@@ -257,26 +243,21 @@ class UniStatSystemModel:
             ]:
                 boiler_thermal_masses.append(DEFAULT_BOILER_MASS)
                 radiator_constants.append(DEFAULT_RADIATOR_CONSTANT)
-        boiler_thermal_masses = np.array(boiler_thermal_masses)
 
         # TODO Populate heating and cooling outputs
 
         adjacency_matrix = np.array(config_data["adjacency"], dtype=bool)
 
-        outside_resistances = (
-            np.ones(np.count_nonzero(adjacency_matrix[0, :]))
-            * DEFAULT_RESISTANCE_OUTSIDE
+        outside_resistances = [DEFAULT_RESISTANCE_OUTSIDE] * np.count_nonzero(
+            adjacency_matrix[0, :]
         )
-        inside_resistances = (
-            np.ones(np.count_nonzero(adjacency_matrix[1:, :]))
-            * DEFAULT_RESISTANCE_INSIDE
+        inside_resistances = [DEFAULT_RESISTANCE_INSIDE] * np.count_nonzero(
+            adjacency_matrix[1:, :]
         )
-        thermal_resistances = np.concatenate((outside_resistances, inside_resistances))
+        thermal_resistances = outside_resistances + inside_resistances
         assert np.size(thermal_resistances) == np.count_nonzero(adjacency_matrix)
 
-        internal_loads = np.array([])
-        if estimate_internal_loads:
-            internal_loads = np.zeros((1, num_rooms))
+        internal_loads = [0] * num_rooms if estimate_internal_loads else []
 
         self._model_params = UniStatModelParams(
             conf_data=dict(config_data),
@@ -288,8 +269,8 @@ class UniStatSystemModel:
             internal_loads=internal_loads,
             temp_variance=temp_variance,
             thermal_lag=DEFAULT_THERMAL_LAG,
-            heat_outputs=np.array([]),
-            cooling_outputs=np.array([]),
+            heat_outputs=[],
+            cooling_outputs=[],
         )
 
     def _update_model(self):
