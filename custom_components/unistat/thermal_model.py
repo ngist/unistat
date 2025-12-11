@@ -231,14 +231,6 @@ class UniStatSystemModel:
         DEFAULT_RADIATOR_CONSTANT = 0.03
         DEFAULT_THERMAL_LAG = 3600 * 6  # 6 hours
 
-        # In kW
-        # DEFAULT_HVAC_COOL = 1  # ~3500 BTU/hr
-        # DEFAULT_HVAC_HEAT = 2  # ~7000 BTU/hr
-        # DEFAULT_SPACEHEATER_HEAT = 1.5  # 1500 W
-        # DEFAULT_HEATPUMP_COOLING = -3.5  # 12,000 BTU/hr
-        # DEFAULT_HEATPUMP_HEATING = 4.22  # 14,400 BTU/hr
-        # DEFAULT_CENTRAL_BOILER_HEAT = 41  # 140,000 BTU/hr
-
         rooms = config_data[CONF_AREAS]
         num_rooms = len(rooms)
         temp_variance = [0.0] * num_rooms

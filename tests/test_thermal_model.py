@@ -106,6 +106,46 @@ MODEL_PARAMS_FULL = UniStatModelParams(
 
 
 @pytest.mark.parametrize(
+    "input",
+    [
+        MODEL_PARAMS_MIN,
+        MODEL_PARAMS_NO_LOADS,
+        MODEL_PARAMS_NO_BOILER,
+        MODEL_PARAMS_FULL,
+    ],
+)
+class TestUniStatModelParams_Nominal:
+    def test_to_vector_roundtrip(self, input: UniStatModelParams):
+        initial_vector = input.to_vector()
+        final = input.from_vector(initial_vector)
+        final_vector = final.to_vector()
+
+        assert final == input
+        assert np.all(final_vector == initial_vector)
+
+    def test_bounds_shape(self, input: UniStatModelParams):
+        param_shape = input.to_vector().shape
+        bounds_shape = input.param_bounds.shape
+        assert param_shape[0] == bounds_shape[0]
+        assert bounds_shape[1] == 2
+
+    def test_bounds_finite(self, input: UniStatModelParams):
+        assert np.all(np.isfinite(input.param_bounds))
+
+    def test_self_consistent(self, input: UniStatModelParams):
+        assert input.self_consistent
+
+    def test_in_bounds(self, input: UniStatModelParams):
+        assert input.in_bounds
+
+    def test_num_rooms(self, input: UniStatModelParams):
+        assert input.num_rooms == 3
+
+    def test_valid_adjacency(self, input: UniStatModelParams):
+        assert input.valid_adjacency
+
+
+@pytest.mark.parametrize(
     "input,num_params",
     [
         (MODEL_PARAMS_MIN, 13),
@@ -114,39 +154,21 @@ MODEL_PARAMS_FULL = UniStatModelParams(
         (MODEL_PARAMS_FULL, 20),
     ],
 )
-class TestUniStatModelParams_Nominal:
-    def test_to_vector_roundtrip(self, input: UniStatModelParams, num_params: int):
-        initial_vector = input.to_vector()
-        final = input.from_vector(initial_vector)
-        final_vector = final.to_vector()
+def test_num_params(input: UniStatModelParams, num_params: int):
+    assert input.num_params == num_params
 
-        print(final.__eq__(input))
-        assert final.__eq__(input)
-        assert np.all(final_vector == initial_vector)
 
-    def test_bounds_shape(self, input: UniStatModelParams, num_params: int):
-        param_shape = input.to_vector().shape
-        bounds_shape = input.param_bounds.shape
-        assert param_shape[0] == bounds_shape[0]
-        assert bounds_shape[1] == 2
-
-    def test_bounds_finite(self, input: UniStatModelParams, num_params: int):
-        assert np.all(np.isfinite(input.param_bounds))
-
-    def test_self_consistent(self, input: UniStatModelParams, num_params: int):
-        assert input.self_consistent
-
-    def test_in_bounds(self, input: UniStatModelParams, num_params: int):
-        assert input.in_bounds
-
-    def test_num_rooms(self, input: UniStatModelParams, num_params: int):
-        assert input.num_rooms == 3
-
-    def test_valid_adjacency(self, input: UniStatModelParams, num_params: int):
-        assert input.valid_adjacency
-
-    def test_num_params(self, input: UniStatModelParams, num_params: int):
-        assert input.num_params == num_params
+@pytest.mark.parametrize(
+    "input,has_boiler",
+    [
+        (MODEL_PARAMS_MIN, False),
+        (MODEL_PARAMS_NO_LOADS, True),
+        (MODEL_PARAMS_NO_BOILER, False),
+        (MODEL_PARAMS_FULL, True),
+    ],
+)
+def test_has_boiler(input: UniStatModelParams, has_boiler: bool):
+    assert input.has_boiler == has_boiler
 
 
 class TestUniStatModelParams_OffNominal:
