@@ -194,6 +194,7 @@ class TestUniStatModelParams_OffNominal:
         [
             ("internal_loads", [0.1, 0.2]),
             ("thermal_resistances", [1, 2]),
+            ("room_thermal_masses", [1, 2]),
         ],
     )
     def test_self_consistent(self, key, val):

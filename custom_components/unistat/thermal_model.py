@@ -4,6 +4,7 @@ import numpy.typing as npt
 from dataclasses import dataclass, asdict
 from typing import Self, Final, Any
 from types import MappingProxyType
+from functools import cached_property
 
 from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
 from homeassistant.helpers.storage import Store
@@ -61,7 +62,7 @@ class UniStatModelParams:
 
         return np.concat(parameters)
 
-    @property
+    @cached_property
     def tunable_fields(self) -> tuple[str]:
         """Returns list of fields that contain tunable parameters"""
         return (
@@ -76,7 +77,7 @@ class UniStatModelParams:
             "temp_variance",
         )
 
-    @property
+    @cached_property
     def bounds_map(self) -> MappingProxyType[str, tuple[float, float]]:
         """Dict of fields and their corresponding valid ranges"""
         return MappingProxyType(
@@ -108,13 +109,14 @@ class UniStatModelParams:
 
     @property
     def self_consistent(self) -> bool:
-        """Checks for self consistency of parameter sizes, does not check bounds"""
+        """Checks for self consistency of parameter sizes, does not check that parameters are in bounds"""
         interal_loads_consistent = len(self.internal_loads) == (
             self.num_rooms if self.estimate_internal_loads else 0
         )
         thermal_resistances_consistent = len(self.thermal_resistances) == np.sum(
             self.adjacency_matrix
         )
+        room_masses_consistent = len(self.room_thermal_masses) == self.num_rooms
 
         # TODO Implement more checks
 
@@ -122,6 +124,7 @@ class UniStatModelParams:
             self.valid_adjacency
             and interal_loads_consistent
             and thermal_resistances_consistent
+            and room_masses_consistent
         )
 
     @property
