@@ -176,11 +176,6 @@ class UniStatSystemModel:
         config_data,
         model_params: UniStatModelParams | dict[str, Any] | None = None,
     ):
-        self._a = None
-        self._b = None
-        self._c = None
-        self._d = None
-
         # If no model params are provided initialize the model based on the config
         self._model_params = model_params
         if not self._model_params:
@@ -204,14 +199,14 @@ class UniStatSystemModel:
             )
             self._initialize_state(config_data=config_data)
 
-        # self._update_model()
+        self._ss_model = control.ss(self.A, self.B, self.C, self.D)
 
     def _initialize_model_params(
         self,
         config_data,
         estimate_internal_loads: bool = False,
     ) -> UniStatModelParams:
-        """Generates a UniStatModelParams with default values"""
+        """Generates a UniStatModelParams with default values based"""
 
         # CONSTANTS
         HEAT_CAPACITY_OF_WATER = 4.186  # kJ/(kg*K)
@@ -276,24 +271,15 @@ class UniStatSystemModel:
             cooling_outputs=[],
         )
 
-    def _update_model(self):
-        """Called after making updates to the model parameters to regenerate the model"""
-        self._needs_update = True
-        self._ss_model = control.ss(self.A, self.B, self.C, self.D)
-        self._needs_update = False
-
     @property
     def model_params(self):
         return self._model_params
 
-    @property
+    @cached_property
     def A(self):
         """Generates the A matrix based on system parameters"""
 
         # Only regenerate matrix if needed
-        if self._a and not self._needs_update:
-            return self._a
-
         resistance_matrix = np.zeros_like(self.model_params.adjacency_matrix)
         resistance_matrix[self.model_params.adjacency_matrix] = (
             self.model_params.thermal_resistances
@@ -316,17 +302,12 @@ class UniStatSystemModel:
         # Divide the other rows by the thermal mass
         temp = a[1:, :].T / self.model_params.room_thermal_masses
         a[1:, :] = temp.T
-        self._a = a
 
-        return self._a
+        return a
 
-    @property
+    @cached_property
     def B(self):
-        """Generates the A matrix based on system parameters."""
-
-        # Only regenerate matrix if needed
-        if self._b and not self._needs_update:
-            return self._b
+        """Generates the B matrix based on system parameters."""
 
         num_rooms = len(self.model_params.rooms)
         num_controls = len(self.model_params.heat_outputs) + len(
@@ -335,15 +316,14 @@ class UniStatSystemModel:
 
         b = np.zeros_like((num_rooms + 1, num_controls))
 
-        self._b = b
-        return self._b
+        return b
 
-    @property
+    @cached_property
     def C(self):
         """Generates the C matrix based on system parameters."""
         return 1
 
-    @property
+    @cached_property
     def D(self):
         """Generates the D matrix based on system parameters."""
         return 0
