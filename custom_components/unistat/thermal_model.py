@@ -32,38 +32,8 @@ class UniStatModelParams:
     internal_loads: list[float]
     temp_variance: list[float]
 
-    def asdict(self) -> dict[str, Any]:
-        return asdict(self)
-
-    def from_vector(self, parameters: npt.NDArray) -> Self:
-        """Take in an array and update the UniStatModelParams.
-
-        The input parameters must match the size and ordering of the result of to_vector().
-        """
-
-        data = self.asdict()
-
-        first = 0
-        for tf in self.tunable_fields:
-            last = first + np.size(data[tf])
-            data[tf] = parameters[first:last].tolist()
-            first = last
-
-        return UniStatModelParams(**data)
-
-    def to_vector(self) -> npt.NDArray:
-        """Pack tunable parameters into a single vector"""
-
-        data = self.asdict()
-
-        parameters = []
-        for tf in self.tunable_fields:
-            parameters.append(data[tf])
-
-        return np.concat(parameters)
-
     @cached_property
-    def tunable_fields(self) -> tuple[str]:
+    def _tunable_fields(self) -> tuple[str]:
         """Returns list of fields that contain tunable parameters"""
         return (
             "thermal_lag",
@@ -78,7 +48,7 @@ class UniStatModelParams:
         )
 
     @cached_property
-    def bounds_map(self) -> MappingProxyType[str, tuple[float, float]]:
+    def _bounds_map(self) -> MappingProxyType[str, tuple[float, float]]:
         """Dict of fields and their corresponding valid ranges"""
         return MappingProxyType(
             {
@@ -94,18 +64,73 @@ class UniStatModelParams:
             }
         )
 
+    def asdict(self) -> dict[str, Any]:
+        return asdict(self)
+
+    def from_vector(self, parameters: npt.NDArray) -> Self:
+        """Take in an array and update the UniStatModelParams.
+
+        The input parameters must match the size and ordering of the result of to_vector().
+        """
+
+        data = self.asdict()
+
+        first = 0
+        for tf in self._tunable_fields:
+            last = first + np.size(data[tf])
+            data[tf] = parameters[first:last].tolist()
+            first = last
+
+        return UniStatModelParams(**data)
+
+    def to_vector(self) -> npt.NDArray:
+        """Pack tunable parameters into a single vector"""
+
+        data = self.asdict()
+
+        parameters = []
+        for tf in self._tunable_fields:
+            parameters.append(data[tf])
+
+        return np.concat(parameters)
+
+    @property
+    def num_rooms(self) -> int:
+        return len(self.conf_data[CONF_AREAS])
+
+    @property
+    def has_boiler(self) -> bool:
+        return len(self.boiler_thermal_masses) > 0
+
+    @property
+    def adjacency_matrix(self) -> npt.NDArray:
+        return np.array(self.conf_data["adjacency"])
+
     @property
     def param_bounds(self) -> npt.NDArray:
         """Provide optimization bounds for tunable parameters"""
 
         data = self.asdict()
-        bounds_map = self.bounds_map
+        bounds_map = self._bounds_map
 
         constraints_list = []
-        for tf in self.tunable_fields:
+        for tf in self._tunable_fields:
             constraints_list.extend([bounds_map[tf]] * len(data[tf]))
 
         return np.array(constraints_list)
+
+    @property
+    def in_bounds(self) -> bool:
+        """Checks that all parameters are within bounds"""
+        data = self.asdict()
+        bounds_map = self._bounds_map
+
+        for tf in self._tunable_fields:
+            vals = np.array(data[tf])
+            bounds = bounds_map[tf]
+            if np.any((vals < bounds[0]) | (vals > bounds[1])):
+                return False
+        return True
 
     @property
     def self_consistent(self) -> bool:
@@ -128,34 +153,9 @@ class UniStatModelParams:
         )
 
     @property
-    def in_bounds(self) -> bool:
-        """Checks that all parameters are within bounds"""
-        data = self.asdict()
-        bounds_map = self.bounds_map
-
-        for tf in self.tunable_fields:
-            vals = np.array(data[tf])
-            bounds = bounds_map[tf]
-            if np.any((vals < bounds[0]) | (vals > bounds[1])):
-                return False
-        return True
-
-    @property
-    def num_rooms(self) -> int:
-        return len(self.conf_data[CONF_AREAS])
-
-    @property
     def valid_adjacency(self) -> bool:
         # Checks that an supplied adjacency matrix conforms to the expected form
         return self.is_valid_adjacency(self.adjacency_matrix, self.num_rooms)
-
-    @property
-    def adjacency_matrix(self) -> npt.NDArray:
-        return np.array(self.conf_data["adjacency"])
-
-    @property
-    def has_boiler(self) -> bool:
-        return len(self.boiler_thermal_masses) > 0
 
     @staticmethod
     def is_valid_adjacency(adjacency_matrix: npt.ArrayLike, num_rooms: int):
