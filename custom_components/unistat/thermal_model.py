@@ -17,7 +17,7 @@ class UniStatModelParamsStore(Store):
         raise NotImplementedError
 
 
-@dataclass
+@dataclass(eq=True)
 class UniStatModelParams:
     conf_data: dict[str, Any]
     estimate_internal_loads: bool
@@ -44,7 +44,7 @@ class UniStatModelParams:
         first = 0
         for tf in self.tunable_fields:
             last = first + np.size(data[tf])
-            data[tf] = parameters[first:last]
+            data[tf] = parameters[first:last].tolist()
             first = last
 
         return UniStatModelParams(**data)
@@ -59,22 +59,6 @@ class UniStatModelParams:
             parameters.append(data[tf])
 
         return np.concat(parameters)
-
-    def __eq__(self, value):
-        """Check for equivalence"""
-        if not isinstance(value, (UniStatModelParams)):
-            return False
-        other = value.asdict()
-        me = self.asdict()
-        result = True
-        for k in me:
-            if isinstance(me[k], (np.ndarray)):
-                if not np.all(me[k] == other[k]):
-                    result = False
-            else:
-                if me[k] != other[k]:
-                    result = False
-        return result
 
     @property
     def tunable_fields(self) -> tuple[str]:
@@ -124,11 +108,11 @@ class UniStatModelParams:
     @property
     def self_consistent(self) -> bool:
         """Checks for self consistency of parameter sizes, does not check bounds"""
-        interal_loads_consistent = self.internal_loads.shape == (
-            (self.num_rooms,) if self.estimate_internal_loads else (0,)
+        interal_loads_consistent = len(self.internal_loads) == (
+            self.num_rooms if self.estimate_internal_loads else 0
         )
-        thermal_resistances_consistent = self.thermal_resistances.shape == (
-            np.sum(self.adjacency_matrix),
+        thermal_resistances_consistent = len(self.thermal_resistances) == np.sum(
+            self.adjacency_matrix
         )
 
         # TODO Implement more checks

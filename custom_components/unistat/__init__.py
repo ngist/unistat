@@ -1,13 +1,12 @@
 """The UniStat integration."""
 
 import asyncio
-from json import JSONEncoder
-from enum import StrEnum
+
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from .thermal_model import PARAM_VERSION, UniStatModelParams, UniStatModelParamsStore
+from .thermal_model import PARAM_VERSION, UniStatModelParamsStore
 from .const import DOMAIN
 
 from .coordinator import (
@@ -20,17 +19,6 @@ from .coordinator import (
 PLATFORMS: tuple[Platform] = (Platform.CLIMATE, Platform.BINARY_SENSOR, Platform.SENSOR)
 
 
-class UniStatModelParamsEncoder(JSONEncoder):
-    """JSON Encoder for UniStatModelParams"""
-
-    def default(self, obj):
-        if isinstance(obj, UniStatModelParams):
-            return obj.todict()
-        if isinstance(obj, StrEnum):
-            return str(obj)
-        return super().default(obj)
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: UnistatConfigEntry) -> bool:
     """Set up UniStat from a config entry."""
 
@@ -38,7 +26,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: UnistatConfigEntry) -> b
         hass,
         version=PARAM_VERSION,
         key=f"{DOMAIN}/model_params",
-        encoder=UniStatModelParamsEncoder(),
     )
     control_coordinator = UnistatControlCoordinator(hass, entry)
     learning_coordinator = UnistatLearningCoordinator(hass, entry)
