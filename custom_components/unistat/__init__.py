@@ -6,7 +6,7 @@ import asyncio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from .thermal_model import PARAM_VERSION, UniStatModelParamsStore
+from .model_params import PARAM_VERSION, UniStatModelParamsStore
 from .const import DOMAIN
 
 from .coordinator import (

@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from custom_components.unistat.thermal_model import UniStatModelParams
+from custom_components.unistat.model_params import UniStatModelParams
 from homeassistant.const import CONF_NAME
 
 
@@ -37,6 +37,7 @@ MODEL_PARAMS_MIN = UniStatModelParams(
     thermal_resistances=[1, 1.5, 2],
     heat_outputs=[1.1, 2.1],
     cooling_outputs=[-1, -2],
+    radiator_rooms=[],
     boiler_thermal_masses=[],
     radiator_constants=[],
     internal_loads=[],
@@ -70,6 +71,7 @@ MODEL_PARAMS_NO_LOADS = UniStatModelParams(
     thermal_resistances=[1, 1.5, 2],
     heat_outputs=[1.1, 2.1],
     cooling_outputs=[-1, -2],
+    radiator_rooms=["kitchen", "bedroom"],
     boiler_thermal_masses=[100, 101],
     radiator_constants=[0.1, 0.2],
     internal_loads=[],
@@ -85,6 +87,7 @@ MODEL_PARAMS_NO_BOILER = UniStatModelParams(
     heat_outputs=[1.1, 2.1],
     cooling_outputs=[-1, -2],
     boiler_thermal_masses=[],
+    radiator_rooms=[],
     radiator_constants=[],
     internal_loads=[0.3, 0.4, 0.5],
     temp_variance=[0.1, 0.2],
@@ -98,6 +101,7 @@ MODEL_PARAMS_FULL = UniStatModelParams(
     thermal_resistances=[1, 1.5, 2],
     heat_outputs=[1.1, 2.1],
     cooling_outputs=[-1, -2],
+    radiator_rooms=["kitchen", "bedroom"],
     boiler_thermal_masses=[100, 101],
     radiator_constants=[0.1, 0.2],
     internal_loads=[0.3, 0.4, 0.5],
