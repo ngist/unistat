@@ -1,6 +1,7 @@
 import control
 import numpy as np
 import numpy.typing as npt
+import logging
 from dataclasses import dataclass, asdict
 from typing import Self, Final, Any
 from types import MappingProxyType
@@ -8,6 +9,8 @@ from functools import cached_property
 
 from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
 from homeassistant.helpers.storage import Store
+
+_LOGGER = logging.getLogger(__name__)
 
 PARAM_VERSION: Final = 1
 
@@ -18,7 +21,7 @@ class UniStatModelParamsStore(Store):
         raise NotImplementedError
 
 
-@dataclass(eq=True)
+@dataclass(frozen=True)
 class UniStatModelParams:
     conf_data: dict[str, Any]
     estimate_internal_loads: bool
@@ -179,26 +182,29 @@ class UniStatSystemModel:
         self._d = None
 
         # If no model params are provided initialize the model based on the config
-        if not model_params:
+        self._model_params = model_params
+        if not self._model_params:
+            _LOGGER.info("No model_params provided initializing from scratch")
             self._initialize_model_params(config_data=config_data)
-            # self._update_model()
-            return
 
         # Munge model parameters into the right type if they are not.
-        if isinstance(model_params, dict):
-            model_params = UniStatModelParams.fromdict(model_params)
+        if isinstance(self._model_params, dict):
+            _LOGGER.info("Coercing model_params to UniStatModelParams")
+            self._model_params = UniStatModelParams(**model_params)
 
-        if not isinstance(model_params, UniStatModelParams):
+        if not isinstance(self._model_params, UniStatModelParams):
             raise TypeError(
                 f"model_params of type: {type(model_params)} is unexpected."
             )
 
-        # If config data has changed update the model parameters based on the new config while preserving existing data
-        if config_data != model_params.conf_data:
-            # TODO actually preserve data for now just reinitialize
+        if config_data != self._model_params.conf_data:
+            # TODO actually preserve data that can be preserved but for now just reinitialize
+            _LOGGER.warning(
+                "Mismatch between current config and config in model_params, reinitializing."
+            )
             self._initialize_state(config_data=config_data)
-            # self._update_model()
-            return
+
+        # self._update_model()
 
     def _initialize_model_params(
         self,
