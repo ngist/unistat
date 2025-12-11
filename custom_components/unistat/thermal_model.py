@@ -73,6 +73,9 @@ class UniStatModelParams:
         The input parameters must match the size and ordering of the result of to_vector().
         """
 
+        if parameters.shape != (self.num_params,):
+            raise ValueError("provided parameters are the wrong shape.")
+
         data = self.asdict()
 
         first = 0

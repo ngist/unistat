@@ -205,3 +205,8 @@ class TestUniStatModelParams_OffNominal:
         data[key] = val
         mp = UniStatModelParams(**data)
         assert not mp.self_consistent
+
+    def test_from_vector(self):
+        initial = MODEL_PARAMS_FULL.to_vector()
+        with pytest.raises(ValueError):
+            MODEL_PARAMS_FULL.from_vector(initial[1:])
