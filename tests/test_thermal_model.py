@@ -115,12 +115,16 @@ MODEL_PARAMS_FULL = UniStatModelParams(
     ],
 )
 class TestUniStatModelParams_Nominal:
-    def test_tunable_params_roundtrip(self, input: UniStatModelParams):
-        result = input.from_params(input.tunable_params)
-        assert result == input
+    def test_to_vector_roundtrip(self, input: UniStatModelParams):
+        initial_vector = input.to_vector()
+        final = input.from_vector(initial_vector)
+        final_vector = final.to_vector()
+
+        assert final == input
+        assert np.all(final_vector == initial_vector)
 
     def test_bounds_shape(self, input: UniStatModelParams):
-        param_shape = input.tunable_params.shape
+        param_shape = input.to_vector().shape
         bounds_shape = input.param_bounds.shape
         assert param_shape[0] == bounds_shape[0]
         assert bounds_shape[1] == 2
@@ -143,32 +147,42 @@ class TestUniStatModelParams_Nominal:
 
 class TestUniStatModelParams_OffNominal:
     def test_in_bounds_fail_low(self):
-        orig_params = MODEL_PARAMS_FULL.tunable_params
-        for i in range(len(orig_params)):
-            new_params = MODEL_PARAMS_FULL.tunable_params
+        """Check that low bounds check is performed on each tunable parameter"""
+        for i in range(len(MODEL_PARAMS_FULL.to_vector())):
+            new_params = MODEL_PARAMS_FULL.to_vector()
             new_params[i] = -1e9
-            new_obj = MODEL_PARAMS_FULL.from_params(new_params)
-            assert not new_obj.in_bounds
+            obj = MODEL_PARAMS_FULL.from_vector(new_params)
+            assert not obj.in_bounds
 
     def test_in_bounds_fail_high(self):
-        orig_params = MODEL_PARAMS_FULL.tunable_params
-        for i in range(len(orig_params)):
-            new_params = MODEL_PARAMS_FULL.tunable_params
+        """Check that high bounds check is performed on each tunable parameter"""
+        for i in range(len(MODEL_PARAMS_FULL.to_vector())):
+            new_params = MODEL_PARAMS_FULL.to_vector()
             new_params[i] = 1e9
-            new_obj = MODEL_PARAMS_FULL.from_params(new_params)
-            assert not new_obj.in_bounds
+            obj = MODEL_PARAMS_FULL.from_vector(new_params)
+            assert not obj.in_bounds
 
     @pytest.mark.parametrize(
         "adjacency",
         [
-            [[0, 1, 2], [0, 0, 1], [0, 0, 0]],  # Invalid value
-            [[0, 1, 1], [1, 0, 1], [0, 0, 0]],  # Not upper triangular
-            [[0, 1], [0, 0], [0, 0]],  # Invalid Shape
-            [[1, 1, 1], [0, 0, 1], [0, 0, 0]],  # Has diagonal val
+            [[0, 1, 2, 1], [0, 0, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],  # Invalid value
+            [
+                [0, 1, 1, 0],
+                [1, 0, 1, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+            ],  # Not upper triangular
+            [[0, 1], [0, 0]],  # Invalid Shape
+            [
+                [1, 1, 1, 1],
+                [0, 0, 1, 1],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+            ],  # Has diagonal val
         ],
     )
     def test_valid_adjacency(self, adjacency):
-        data = MODEL_PARAMS_FULL._asdict()
+        data = MODEL_PARAMS_FULL.asdict()
         data["conf_data"]["adjacency"] = adjacency
         mp = UniStatModelParams(**data)
         assert not mp.valid_adjacency
@@ -178,11 +192,11 @@ class TestUniStatModelParams_OffNominal:
         "key,val",
         [
             ("internal_loads", np.array([0.1, 0.2])),
-            ("thermal_resistances", np.array([1, 1.5, 2])),
+            ("thermal_resistances", np.array([1, 2])),
         ],
     )
     def test_self_consistent(self, key, val):
-        data = MODEL_PARAMS_FULL._asdict()
+        data = MODEL_PARAMS_FULL.asdict()
         data[key] = val
         mp = UniStatModelParams(**data)
         assert not mp.self_consistent

@@ -1,7 +1,8 @@
 import control
 import numpy as np
 import numpy.typing as npt
-from typing import NamedTuple, Self, Final, Any
+from dataclasses import dataclass, asdict
+from typing import Self, Final, Any
 from types import MappingProxyType
 
 from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
@@ -16,27 +17,29 @@ class UniStatModelParamsStore(Store):
         raise NotImplementedError
 
 
-class UniStatModelParams(NamedTuple):
+@dataclass
+class UniStatModelParams:
     conf_data: dict[str, Any]
     estimate_internal_loads: bool
-    thermal_lag: npt.NDArray
-    room_thermal_masses: npt.NDArray
-    thermal_resistances: npt.NDArray
-    heat_outputs: npt.NDArray
-    cooling_outputs: npt.NDArray
-    radiator_constants: npt.NDArray
-    boiler_thermal_masses: npt.NDArray
-    internal_loads: npt.NDArray
-    temp_variance: npt.NDArray
+    thermal_lag: list[float]
+    room_thermal_masses: list[float]
+    thermal_resistances: list[float]
+    heat_outputs: list[float]
+    cooling_outputs: list[float]
+    radiator_constants: list[float]
+    boiler_thermal_masses: list[float]
+    internal_loads: list[float]
+    temp_variance: list[float]
 
-    def from_params(self, parameters: npt.NDArray) -> Self:
-        """Take in an array and return a new UniStatModelParams.
+    def asdict(self) -> dict[str, Any]:
+        return asdict(self)
 
-        The input parameters must match the size and ordering of the tunable_params property.
-        Presumably those from a model fitting process.
+    def from_vector(self, parameters: npt.NDArray) -> Self:
+        """Take in an array and update the UniStatModelParams.
 
+        The input parameters must match the size and ordering of the result of to_vector().
         """
-        data = self._asdict()
+        data = self.asdict()
 
         first = 0
         for tf in self.tunable_fields:
@@ -46,12 +49,23 @@ class UniStatModelParams(NamedTuple):
 
         return UniStatModelParams(**data)
 
+    def to_vector(self) -> npt.NDArray:
+        """Pack tunable parameters into a single vector"""
+
+        data = self.asdict()
+
+        parameters = []
+        for tf in self.tunable_fields:
+            parameters.append(data[tf])
+
+        return np.concat(parameters)
+
     def __eq__(self, value):
         """Check for equivalence"""
         if not isinstance(value, (UniStatModelParams)):
             return False
-        other = value._asdict()
-        me = self._asdict()
+        other = value.asdict()
+        me = self.asdict()
         result = True
         for k in me:
             if isinstance(me[k], (np.ndarray)):
@@ -95,22 +109,10 @@ class UniStatModelParams(NamedTuple):
         )
 
     @property
-    def tunable_params(self) -> npt.NDArray:
-        """Pack tunable parameters into a single vector"""
-
-        data = self._asdict()
-
-        parameters = []
-        for tf in self.tunable_fields:
-            parameters.append(data[tf])
-
-        return np.concat(parameters)
-
-    @property
     def param_bounds(self) -> npt.NDArray:
         """Provide optimization bounds for tunable parameters"""
 
-        data = self._asdict()
+        data = self.asdict()
         bounds_map = self.bounds_map
 
         constraints_list = []
@@ -140,11 +142,13 @@ class UniStatModelParams(NamedTuple):
     @property
     def in_bounds(self) -> bool:
         """Checks that all parameters are within bounds"""
-        data = self._asdict()
+        data = self.asdict()
         bounds_map = self.bounds_map
 
         for tf in self.tunable_fields:
-            if np.any((data[tf] < bounds_map[tf][0]) | (data[tf] > bounds_map[tf][1])):
+            vals = np.array(data[tf])
+            bounds = bounds_map[tf]
+            if np.any((vals < bounds[0]) | (vals > bounds[1])):
                 return False
         return True
 
@@ -173,7 +177,7 @@ class UniStatModelParams(NamedTuple):
         return ones_and_zeros and upper_triangle and right_size
 
     def todict(self):
-        out = self._asdict()
+        out = self.asdict()
         for k in out:
             if isinstance(out[k], np.ndarray):
                 out[k] = out[k].tolist()
