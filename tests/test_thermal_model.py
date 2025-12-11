@@ -106,16 +106,16 @@ MODEL_PARAMS_FULL = UniStatModelParams(
 
 
 @pytest.mark.parametrize(
-    "input",
+    "input,num_params",
     [
-        MODEL_PARAMS_MIN,
-        MODEL_PARAMS_NO_LOADS,
-        MODEL_PARAMS_NO_BOILER,
-        MODEL_PARAMS_FULL,
+        (MODEL_PARAMS_MIN, 13),
+        (MODEL_PARAMS_NO_LOADS, 17),
+        (MODEL_PARAMS_NO_BOILER, 16),
+        (MODEL_PARAMS_FULL, 20),
     ],
 )
 class TestUniStatModelParams_Nominal:
-    def test_to_vector_roundtrip(self, input: UniStatModelParams):
+    def test_to_vector_roundtrip(self, input: UniStatModelParams, num_params: int):
         initial_vector = input.to_vector()
         final = input.from_vector(initial_vector)
         final_vector = final.to_vector()
@@ -124,26 +124,29 @@ class TestUniStatModelParams_Nominal:
         assert final.__eq__(input)
         assert np.all(final_vector == initial_vector)
 
-    def test_bounds_shape(self, input: UniStatModelParams):
+    def test_bounds_shape(self, input: UniStatModelParams, num_params: int):
         param_shape = input.to_vector().shape
         bounds_shape = input.param_bounds.shape
         assert param_shape[0] == bounds_shape[0]
         assert bounds_shape[1] == 2
 
-    def test_bounds_finite(self, input: UniStatModelParams):
+    def test_bounds_finite(self, input: UniStatModelParams, num_params: int):
         assert np.all(np.isfinite(input.param_bounds))
 
-    def test_self_consistent(self, input: UniStatModelParams):
+    def test_self_consistent(self, input: UniStatModelParams, num_params: int):
         assert input.self_consistent
 
-    def test_in_bounds(self, input: UniStatModelParams):
+    def test_in_bounds(self, input: UniStatModelParams, num_params: int):
         assert input.in_bounds
 
-    def test_num_rooms(self, input: UniStatModelParams):
+    def test_num_rooms(self, input: UniStatModelParams, num_params: int):
         assert input.num_rooms == 3
 
-    def test_valid_adjacency(self, input: UniStatModelParams):
+    def test_valid_adjacency(self, input: UniStatModelParams, num_params: int):
         assert input.valid_adjacency
+
+    def test_num_params(self, input: UniStatModelParams, num_params: int):
+        assert input.num_params == num_params
 
 
 class TestUniStatModelParams_OffNominal:

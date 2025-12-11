@@ -85,18 +85,17 @@ class UniStatModelParams:
 
     def to_vector(self) -> npt.NDArray:
         """Pack tunable parameters into a single vector"""
-
         data = self.asdict()
-
-        parameters = []
-        for tf in self._tunable_fields:
-            parameters.append(data[tf])
-
+        parameters = [data[tf] for tf in self._tunable_fields]
         return np.concat(parameters)
 
     @property
     def num_rooms(self) -> int:
         return len(self.conf_data[CONF_AREAS])
+
+    @property
+    def num_params(self) -> int:
+        return self.to_vector().shape[0]
 
     @property
     def has_boiler(self) -> bool:
