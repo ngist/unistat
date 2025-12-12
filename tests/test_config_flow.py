@@ -61,14 +61,14 @@ controls = ["switch.spaceheater"]
 _NOMINAL_MINIMAL_CONF = ConfigParams(
     main_conf=make_main_conf(rooms=rooms, controls=controls),
     room_sensors=make_multiroom_sensors(rooms),
-    room_appliances={controls[0]: make_spaceheater(rooms[0])},
+    control_appliances=[make_spaceheater(rooms[0])],
 )
 
 # Minimal config flow with weather station
 _NOMINAL_MIN_WS_CONF = ConfigParams(
     main_conf=make_main_conf(rooms=rooms, controls=controls, use_weather_station=True),
     room_sensors=make_multiroom_sensors(rooms),
-    room_appliances={controls[0]: make_spaceheater(rooms[0])},
+    control_appliances=[make_spaceheater(rooms[0])],
     weather_station=make_weather_station(temp="sensor.outside_temp"),
 )
 
@@ -76,7 +76,7 @@ _NOMINAL_MIN_WS_CONF = ConfigParams(
 _NOMINAL_MIN_ADJ_CONF = ConfigParams(
     main_conf=make_main_conf(rooms=rooms, controls=controls, use_adjacency=True),
     room_sensors=make_multiroom_sensors(rooms),
-    room_appliances={controls[0]: make_spaceheater(rooms[0])},
+    control_appliances=[make_spaceheater(rooms[0])],
     adjacency=make_adjacency(rooms),
 )
 
@@ -86,7 +86,7 @@ _NOMINAL_MIN_ADJ_WS_CONF = ConfigParams(
         rooms=rooms, controls=controls, use_weather_station=True, use_adjacency=True
     ),
     room_sensors=make_multiroom_sensors(rooms),
-    room_appliances={controls[0]: make_spaceheater(rooms[0])},
+    control_appliances=[make_spaceheater(rooms[0])],
     weather_station=make_weather_station(temp="sensor.outside_temp"),
     adjacency=make_adjacency(rooms),
 )
@@ -96,7 +96,7 @@ controls = ["switch.zonevalve"]
 _NOMINAL_MINIMAL_WCENTRAL_CONF = ConfigParams(
     main_conf=make_main_conf(rooms=rooms, controls=controls),
     room_sensors=make_multiroom_sensors(rooms),
-    room_appliances={controls[0]: make_zonevalve(rooms)},
+    control_appliances=[make_zonevalve(rooms)],
     central_appliances=[make_boiler()],
 )
 
@@ -109,22 +109,22 @@ controls = [
 _NOMINAL_COMPLEX_CONF = ConfigParams(
     main_conf=make_main_conf(rooms=rooms, controls=controls),
     room_sensors=make_multiroom_sensors(rooms),
-    room_appliances={
-        controls[0]: make_spaceheater(rooms[0]),
-        controls[1]: make_zonevalve([rooms[1]], central_appliance="New"),
-        controls[2]: make_zonevalve([rooms[2]], central_appliance="boiler"),
-    },
+    control_appliances=[
+        make_spaceheater(rooms[0]),
+        make_zonevalve([rooms[1]], central_appliance="New"),
+        make_zonevalve([rooms[2]], central_appliance="boiler"),
+    ],
     central_appliances=[make_boiler(name="boiler")],
 )
 
 _NOMINAL_NONTRIV_ADJ_CONF = ConfigParams(
     main_conf=make_main_conf(rooms=rooms, controls=controls, use_adjacency=True),
     room_sensors=make_multiroom_sensors(rooms),
-    room_appliances={
-        controls[0]: make_spaceheater(rooms[0]),
-        controls[1]: make_zonevalve([rooms[1]], central_appliance="New"),
-        controls[2]: make_zonevalve([rooms[2]], central_appliance="boiler"),
-    },
+    control_appliances=[
+        make_spaceheater(rooms[0]),
+        make_zonevalve([rooms[1]], central_appliance="New"),
+        make_zonevalve([rooms[2]], central_appliance="boiler"),
+    ],
     central_appliances=[make_boiler(name="boiler")],
     adjacency=make_adjacency(rooms),
 )
@@ -169,8 +169,8 @@ async def test_nominal_config_flow(
 
     # Appliance config
     central_app_index = 0
-    for c in config.main_conf[CONF_CONTROLS]:
-        step1_conf, step2_conf = split_room_app_config(config.room_appliances[c])
+    for i in range(len(config.main_conf[CONF_CONTROLS])):
+        step1_conf, step2_conf = split_room_app_config(config.control_appliances[i])
         # Step 1
         result = await config_step(hass, result, step1_conf)
 

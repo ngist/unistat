@@ -3,9 +3,10 @@ import numpy.typing as npt
 import logging
 
 from typing import Any
+from collections import defaultdict
 from functools import cached_property
 
-from .const import CONF_AREAS, CONF_CONTROLS, CONF_APPLIANCE_TYPE, ControlApplianceType
+from .const import CONF_AREAS, ControlApplianceType
 from .model_params import UniStatModelParams
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,6 +46,17 @@ class UniStatSystemModel:
     def simulate(self, states, controls) -> tuple[npt.NDArray, npt.NDArray]:
         raise NotImplementedError
 
+    def _sort_appliances_by_type(
+        self, config_data
+    ) -> dict[ControlApplianceType, dict[str, Any]]:
+        """Returns a dict of dicts keyed by ControlApplianceType then control_eid"""
+        out = defaultdict(dict)
+        # for c in config_data[CONF_CONTROLS]:
+        #     control_app = config_data["control_appliances"][c]
+        #     app_type = control_app[CONF_APPLIANCE_TYPE]
+        #     out[app_type][c] = control_app
+        return dict(out)
+
     def _initialize_model_params(
         self,
         config_data,
@@ -74,18 +86,12 @@ class UniStatSystemModel:
         num_rooms = len(rooms)
         room_thermal_masses = [DEFAULT_THERMAL_MASS] * num_rooms
 
-        boiler_thermal_masses = []
-        radiator_rooms = set()
-        for c in config_data[CONF_CONTROLS]:
-            control_app = config_data["control_appliances"][c]
-            if control_app[CONF_APPLIANCE_TYPE] in [
-                ControlApplianceType.BoilerZoneCall,
-            ]:
-                boiler_thermal_masses.append(DEFAULT_BOILER_MASS)
-                radiator_rooms |= set(control_app[CONF_AREAS])
+        # apps_by_type = self._sort_appliances_by_type(config_data)
 
-        radiator_rooms = list(radiator_rooms)
-        radiator_constants = [DEFAULT_RADIATOR_CONSTANT]
+        boiler_thermal_masses = [DEFAULT_BOILER_MASS]
+        radiator_rooms = []
+        radiator_constants = [DEFAULT_RADIATOR_CONSTANT] * len(radiator_rooms)
+        hvac_vent_constants = []
 
         # TODO hvac_vent_constants
 
@@ -112,7 +118,7 @@ class UniStatSystemModel:
             radiator_constants=radiator_constants,
             internal_loads=internal_loads,
             thermal_lag=DEFAULT_THERMAL_LAG,
-            hvac_vent_constants=[],
+            hvac_vent_constants=hvac_vent_constants,
         )
 
     @property

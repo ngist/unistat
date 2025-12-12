@@ -36,9 +36,7 @@ def mydata():
     params = ConfigParams(
         main_conf=make_main_conf(rooms, controls),
         room_sensors=make_multiroom_sensors(rooms),
-        room_appliances={
-            c: make_spaceheater([rooms[i]]) for i, c in enumerate(controls)
-        },
+        control_appliances=[make_spaceheater([rooms[i]]) for i in range(len(controls))],
     )
     return make_expected(params)
 

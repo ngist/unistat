@@ -50,7 +50,7 @@ from custom_components.unistat.const import (
 class ConfigParams(NamedTuple):
     main_conf: dict
     room_sensors: dict
-    room_appliances: dict
+    control_appliances: dict
     central_appliances: list = []
     adjacency: dict = []
     weather_station: dict = {}
@@ -60,7 +60,7 @@ class ConfigParams(NamedTuple):
 def make_expected(config: ConfigParams):
     expected = config.main_conf.copy()
     expected["room_sensors"] = config.room_sensors.copy()
-    expected["control_appliances"] = config.room_appliances.copy()
+    expected["control_appliances"] = config.control_appliances.copy()
     expected["central_appliances"] = {}
     for app in config.central_appliances:
         app_name = app[1][CONF_NAME]
@@ -69,13 +69,12 @@ def make_expected(config: ConfigParams):
         expected["central_appliances"][app_name] = app_data
 
     central_counter = 0
-    for c in expected[CONF_CONTROLS]:
-        if CONF_CENTRAL_APPLIANCE in expected["control_appliances"][c]:
-            if expected["control_appliances"][c][CONF_CENTRAL_APPLIANCE] == "New":
-                expected["control_appliances"][c][CONF_CENTRAL_APPLIANCE] = (
-                    config.central_appliances[central_counter][1]["name"]
-                )
-                central_counter += 1
+    for app in expected["control_appliances"]:
+        if CONF_CENTRAL_APPLIANCE in app and app[CONF_CENTRAL_APPLIANCE] == "New":
+            app[CONF_CENTRAL_APPLIANCE] = config.central_appliances[central_counter][1][
+                "name"
+            ]
+            central_counter += 1
 
     rooms = expected[CONF_AREAS]
     size = len(rooms) + 1

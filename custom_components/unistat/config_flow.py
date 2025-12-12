@@ -438,7 +438,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             self.data = user_input
             self.data["room_sensors"] = {}
             self.data["central_appliances"] = {}
-            self.data["control_appliances"] = {}
+            self.data["control_appliances"] = []
             # Return the form of the next step.
             if self.data[CONF_ADJACENCY]:
                 return await self.async_step_adjacency()
@@ -521,12 +521,12 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Captures configuration of a room appliance."""
 
-        self.room_appliance_index = len(self.data["control_appliances"].keys())
-        self.this_appliance = self.data[CONF_CONTROLS][self.room_appliance_index]
+        self.control_appliance_index = len(self.data["control_appliances"])
+        self.this_appliance = self.data[CONF_CONTROLS][self.control_appliance_index]
 
         if user_input is not None:
             # Input is valid, set data.
-            self.data["control_appliances"][self.this_appliance] = user_input
+            self.data["control_appliances"].append(user_input)
             self.appliance_type = user_input[CONF_APPLIANCE_TYPE]
             return await self.async_step_room_appliance_2()
 
@@ -559,9 +559,9 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             ):
                 return await self.async_step_central_appliance()
 
-            self.data["control_appliances"][self.this_appliance].update(user_input)
+            self.data["control_appliances"][-1].update(user_input)
 
-            if self.room_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
+            if self.control_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
                 return self.async_create_entry(title=TITLE, data=self.data)
 
             # Return the form of the next step.
@@ -582,13 +582,13 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             # Input is valid, set data.
-            self.data["control_appliances"][self.this_appliance][
-                CONF_CENTRAL_APPLIANCE
-            ] = user_input[CONF_NAME]
+            self.data["control_appliances"][-1][CONF_CENTRAL_APPLIANCE] = user_input[
+                CONF_NAME
+            ]
             user_input["appliance_type"] = _A2C_MAP[self.appliance_type]
             self.data["central_appliances"][user_input[CONF_NAME]] = user_input
 
-            if self.room_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
+            if self.control_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
                 return self.async_create_entry(title=TITLE, data=self.data)
 
             # Return the form of the next step.

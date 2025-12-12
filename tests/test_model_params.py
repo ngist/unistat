@@ -22,9 +22,7 @@ def conf_simple():
     params = ConfigParams(
         main_conf=make_main_conf(rooms, controls),
         room_sensors=make_multiroom_sensors(rooms),
-        room_appliances={
-            c: make_spaceheater([rooms[i]]) for i, c in enumerate(controls)
-        },
+        control_appliances=[make_spaceheater([rooms[i]]) for i in range(len(controls))],
     )
     return make_expected(params)
 
@@ -50,12 +48,12 @@ def conf_with_boiler():
     params = ConfigParams(
         main_conf=make_main_conf(rooms, controls),
         room_sensors=make_multiroom_sensors(rooms),
-        room_appliances={
-            c: make_zonevalve(
+        control_appliances=[
+            make_zonevalve(
                 [rooms[i]], central_appliance=(boiler[1][CONF_NAME] if i > 0 else None)
             )
-            for i, c in enumerate(controls)
-        },
+            for i in range(len(controls))
+        ],
         central_appliances=[boiler],
     )
     return make_expected(params)
