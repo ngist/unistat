@@ -35,13 +35,11 @@ MODEL_PARAMS_MIN = UniStatModelParams(
     thermal_lag=[3600 * 6],
     room_thermal_masses=[1000, 1500, 2000],
     thermal_resistances=[1, 1.5, 2],
-    heat_outputs=[1.1, 2.1],
-    cooling_outputs=[-1, -2],
+    hvac_vent_constants=[],
     radiator_rooms=[],
     boiler_thermal_masses=[],
     radiator_constants=[],
     internal_loads=[],
-    temp_variance=[0.1, 0.2],
 )
 
 
@@ -69,13 +67,11 @@ MODEL_PARAMS_NO_LOADS = UniStatModelParams(
     thermal_lag=[3600 * 6],
     room_thermal_masses=[1000, 1500, 2000],
     thermal_resistances=[1, 1.5, 2],
-    heat_outputs=[1.1, 2.1],
-    cooling_outputs=[-1, -2],
+    hvac_vent_constants=[],
     radiator_rooms=["kitchen", "bedroom"],
     boiler_thermal_masses=[100, 101],
     radiator_constants=[0.1, 0.2],
     internal_loads=[],
-    temp_variance=[0.1, 0.2],
 )
 
 MODEL_PARAMS_NO_BOILER = UniStatModelParams(
@@ -84,13 +80,11 @@ MODEL_PARAMS_NO_BOILER = UniStatModelParams(
     thermal_lag=[3600 * 6],
     room_thermal_masses=[1000, 1500, 2000],
     thermal_resistances=[1, 1.5, 2],
-    heat_outputs=[1.1, 2.1],
-    cooling_outputs=[-1, -2],
+    hvac_vent_constants=[],
     boiler_thermal_masses=[],
     radiator_rooms=[],
     radiator_constants=[],
     internal_loads=[0.3, 0.4, 0.5],
-    temp_variance=[0.1, 0.2],
 )
 
 MODEL_PARAMS_FULL = UniStatModelParams(
@@ -99,13 +93,11 @@ MODEL_PARAMS_FULL = UniStatModelParams(
     thermal_lag=[3600 * 6],
     room_thermal_masses=[1000, 1500, 2000],
     thermal_resistances=[1, 1.5, 2],
-    heat_outputs=[1.1, 2.1],
-    cooling_outputs=[-1, -2],
+    hvac_vent_constants=[],
     radiator_rooms=["kitchen", "bedroom"],
     boiler_thermal_masses=[100, 101],
     radiator_constants=[0.1, 0.2],
     internal_loads=[0.3, 0.4, 0.5],
-    temp_variance=[0.1, 0.2],
 )
 
 
@@ -152,10 +144,10 @@ class TestUniStatModelParams_Nominal:
 @pytest.mark.parametrize(
     "input,num_params",
     [
-        (MODEL_PARAMS_MIN, 13),
-        (MODEL_PARAMS_NO_LOADS, 17),
-        (MODEL_PARAMS_NO_BOILER, 16),
-        (MODEL_PARAMS_FULL, 20),
+        (MODEL_PARAMS_MIN, 7),
+        (MODEL_PARAMS_NO_LOADS, 11),
+        (MODEL_PARAMS_NO_BOILER, 10),
+        (MODEL_PARAMS_FULL, 14),
     ],
 )
 def test_num_params(input: UniStatModelParams, num_params: int):

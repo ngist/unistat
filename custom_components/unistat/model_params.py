@@ -27,12 +27,10 @@ class UniStatModelParams:
     thermal_lag: list[float]
     room_thermal_masses: list[float]
     thermal_resistances: list[float]
-    heat_outputs: list[float]
-    cooling_outputs: list[float]
     radiator_constants: list[float]
+    hvac_vent_constants: list[float]
     boiler_thermal_masses: list[float]
     internal_loads: list[float]
-    temp_variance: list[float]
 
     @cached_property
     def _tunable_fields(self) -> tuple[str]:
@@ -41,13 +39,16 @@ class UniStatModelParams:
             "thermal_lag",
             "room_thermal_masses",
             "thermal_resistances",
-            "heat_outputs",
-            "cooling_outputs",
+            "hvac_vent_constants",
             "boiler_thermal_masses",
             "radiator_constants",
             "internal_loads",
-            "temp_variance",
         )
+
+    @cached_property
+    def _non_constant_fields(self) -> tuple[str]:
+        """Returns list of fields that contain time-varying parameters"""
+        return ("internal_loads",)
 
     @cached_property
     def _bounds_map(self) -> MappingProxyType[str, tuple[float, float]]:
@@ -57,12 +58,12 @@ class UniStatModelParams:
                 "thermal_lag": (3600 * 0.25, 3600 * 12),
                 "room_thermal_masses": (100, 10000),
                 "boiler_thermal_masses": (100, 2000),
+                "hvac_vent_constants": (0, 1),
                 "thermal_resistances": (0, 2),
                 "heat_outputs": (0.25, 10),
                 "cooling_outputs": (-10, -0.25),
                 "internal_loads": (0, 1),
                 "radiator_constants": (0.001, 1),
-                "temp_variance": (0, 3),
             }
         )
 

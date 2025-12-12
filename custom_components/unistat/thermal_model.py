@@ -72,7 +72,6 @@ class UniStatSystemModel:
 
         rooms = config_data[CONF_AREAS]
         num_rooms = len(rooms)
-        temp_variance = [0.0] * num_rooms
         room_thermal_masses = [DEFAULT_THERMAL_MASS] * num_rooms
 
         boiler_thermal_masses = []
@@ -88,7 +87,7 @@ class UniStatSystemModel:
         radiator_rooms = list(radiator_rooms)
         radiator_constants = [DEFAULT_RADIATOR_CONSTANT]
 
-        # TODO Populate heating and cooling outputs
+        # TODO hvac_vent_constants
 
         adjacency_matrix = np.array(config_data["adjacency"], dtype=bool)
 
@@ -112,10 +111,8 @@ class UniStatSystemModel:
             radiator_rooms=radiator_rooms,
             radiator_constants=radiator_constants,
             internal_loads=internal_loads,
-            temp_variance=temp_variance,
             thermal_lag=DEFAULT_THERMAL_LAG,
-            heat_outputs=[],
-            cooling_outputs=[],
+            hvac_vent_constants=[],
         )
 
     @property
