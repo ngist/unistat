@@ -7,6 +7,7 @@ from typing import Dict
 from .const import (
     CONF_TEMP_ENTITY,
     CONF_HUMIDITY_ENTITY,
+    CONF_ROOM_SETTINGS,
     TITLE,
 )
 from homeassistant.components.climate import (
@@ -64,13 +65,13 @@ async def async_setup_entry(
     """Initialize UniStat config entry."""
 
     climate_entities = []
-    for room in config_entry.data["room_sensors"]:
+    for room in config_entry.data[CONF_ROOM_SETTINGS]:
         _LOGGER.info(
             "Configuring thermostat UI for %s",
             room,
         )
 
-        room_sensors = config_entry.data["room_sensors"][room]
+        room_sensors = config_entry.data[CONF_ROOM_SETTINGS][room]
         unique_id = f"{config_entry.entry_id}_{room}"
         climate_entities.append(
             UniStatClimateEntity(

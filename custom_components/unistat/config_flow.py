@@ -50,6 +50,9 @@ from .const import (
     CONF_EFFICIENCY,
     CONF_BOILER_INLET_TEMP_ENTITY,
     CONF_BOILER_OUTLET_TEMP_ENTITY,
+    CONF_CONTROL_APPLIANCES,
+    CONF_CENTRAL_APPLIANCES,
+    CONF_ROOM_SETTINGS,
     SWITCH_APPLIANCE_TYPES,
     CLIMATE_APPLIANCE_TYPES,
     CONF_WEATHER_STATION,
@@ -349,18 +352,18 @@ _APPLIANCE_SCHEMA_MAP = {
 
 _A2C_MAP = {
     ControlApplianceType.BoilerZoneCall: CentralApplianceType.HydroBoiler,
-    ControlApplianceType.ThermoStaticRadiatorValve: CentralApplianceType.HydroBoiler,
-    ControlApplianceType.HVACCoolCall: CentralApplianceType.AcCompressor,
+    ControlApplianceType.HVACCoolCall: CentralApplianceType.HvacCompressor,
     ControlApplianceType.HVACHeatCall: CentralApplianceType.HvacFurnace,
-    ControlApplianceType.HVACThermostat: CentralApplianceType.HeatpumpCompressor,
-    ControlApplianceType.HeatpumpFanUnit: CentralApplianceType.HeatpumpCompressor,
+    ControlApplianceType.HVACThermostat: CentralApplianceType.HvacHeatpump,
+    ControlApplianceType.HeatpumpFanUnit: CentralApplianceType.MiniSplitHeatpump,
 }
 
 _CENTRAL_APPLIANCE_MAP = {
     CentralApplianceType.HydroBoiler: _BOILER_SCHEMA,
-    CentralApplianceType.AcCompressor: _COMPRESSOR_SCHEMA,
+    CentralApplianceType.HvacCompressor: _COMPRESSOR_SCHEMA,
     CentralApplianceType.HvacFurnace: _FURNACE_SCHEMA,
-    CentralApplianceType.HeatpumpCompressor: _HEATPUMP_COMP_SCHEMA,
+    CentralApplianceType.HvacHeatpump: _HEATPUMP_COMP_SCHEMA,
+    CentralApplianceType.MiniSplitHeatpump: _HEATPUMP_COMP_SCHEMA,
 }
 
 
@@ -436,9 +439,9 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         """Invoked when a user initiates a flow via the user interface."""
         if user_input is not None:
             self.data = user_input
-            self.data["room_sensors"] = {}
-            self.data["central_appliances"] = {}
-            self.data["control_appliances"] = []
+            self.data[CONF_ROOM_SETTINGS] = {}
+            self.data[CONF_CONTROL_APPLIANCES] = []
+            self.data[CONF_CENTRAL_APPLIANCES] = []
             # Return the form of the next step.
             if self.data[CONF_ADJACENCY]:
                 return await self.async_step_adjacency()
@@ -494,12 +497,12 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Captures configuration of thermal sensors in each room."""
 
-        room_index = len(self.data["room_sensors"])
+        room_index = len(self.data[CONF_ROOM_SETTINGS])
         this_room = self.data[CONF_AREAS][room_index]
 
         if user_input is not None:
             # Input is valid, set data.
-            self.data["room_sensors"][this_room] = user_input
+            self.data[CONF_ROOM_SETTINGS][this_room] = user_input
 
             if room_index + 1 == len(self.data[CONF_AREAS]):
                 # Room sensors done move onto appliances
@@ -521,12 +524,12 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Captures configuration of a room appliance."""
 
-        self.control_appliance_index = len(self.data["control_appliances"])
+        self.control_appliance_index = len(self.data[CONF_CONTROL_APPLIANCES])
         self.this_appliance = self.data[CONF_CONTROLS][self.control_appliance_index]
 
         if user_input is not None:
             # Input is valid, set data.
-            self.data["control_appliances"].append(user_input)
+            self.data[CONF_CONTROL_APPLIANCES].append(user_input)
             self.appliance_type = user_input[CONF_APPLIANCE_TYPE]
             return await self.async_step_room_appliance_2()
 
@@ -547,7 +550,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             _APPLIANCE_SCHEMA_MAP[self.appliance_type]
             if self.appliance_type in _APPLIANCE_SCHEMA_MAP
             else _gen_select_central_schema(
-                list(self.data["central_appliances"].keys())
+                [app[CONF_NAME] for app in self.data[CONF_CENTRAL_APPLIANCES]]
             )
         )
 
@@ -559,7 +562,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             ):
                 return await self.async_step_central_appliance()
 
-            self.data["control_appliances"][-1].update(user_input)
+            self.data[CONF_CONTROL_APPLIANCES][-1].update(user_input)
 
             if self.control_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
                 return self.async_create_entry(title=TITLE, data=self.data)
@@ -582,11 +585,11 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             # Input is valid, set data.
-            self.data["control_appliances"][-1][CONF_CENTRAL_APPLIANCE] = user_input[
+            self.data[CONF_CONTROL_APPLIANCES][-1][CONF_CENTRAL_APPLIANCE] = user_input[
                 CONF_NAME
             ]
-            user_input["appliance_type"] = _A2C_MAP[self.appliance_type]
-            self.data["central_appliances"][user_input[CONF_NAME]] = user_input
+            user_input[CONF_APPLIANCE_TYPE] = _A2C_MAP[self.appliance_type]
+            self.data[CONF_CENTRAL_APPLIANCES].append(user_input)
 
             if self.control_appliance_index + 1 == len(self.data[CONF_CONTROLS]):
                 return self.async_create_entry(title=TITLE, data=self.data)

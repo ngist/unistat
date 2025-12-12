@@ -38,6 +38,11 @@ CONF_CENTRAL_APPLIANCE = "central_appliance"
 CONF_BOILER_INLET_TEMP_ENTITY = "boiler_inlet_temp"
 CONF_BOILER_OUTLET_TEMP_ENTITY = "boiler_outlet_temp"
 
+#
+CONF_CONTROL_APPLIANCES = "control_appliances"
+CONF_CENTRAL_APPLIANCES = "central_appliances"
+CONF_ROOM_SETTINGS = "room_settings"
+
 
 class ControlMode(StrEnum):
     """Thermostat Modes."""
@@ -52,8 +57,9 @@ class CentralApplianceType(StrEnum):
 
     HydroBoiler = "HydroBoiler"
     HvacFurnace = "HVACFurnace"
-    AcCompressor = "AcCompressor"
-    HeatpumpCompressor = "HeatpumpCompressor"
+    HvacCompressor = "HVACCompressor"
+    HvacHeatpump = "HVACHeatpump"
+    MiniSplitHeatpump = "MiniSplitHeatpump"
 
 
 class ControlApplianceType(StrEnum):
@@ -61,7 +67,6 @@ class ControlApplianceType(StrEnum):
 
     HeatpumpFanUnit = "HeatpumpFanUnit"
     BoilerZoneCall = "BoilerZoneCall"
-    ThermoStaticRadiatorValve = "ThermoStaticRadiatorValve"
     HVACThermostat = "HVACThermostat"
     HVACHeatCall = "HVACHeatCall"
     HVACCoolCall = "HVACCoolCall"
@@ -69,6 +74,17 @@ class ControlApplianceType(StrEnum):
     WindowAC = "WindowAC"
     WindowHeatpump = "WindowHeatpump"
 
+
+HVAC_PERIPHERALS = (
+    ControlApplianceType.HVACCoolCall,
+    ControlApplianceType.HVACHeatCall,
+    ControlApplianceType.HVACThermostat,
+)
+STANDALONE_APPLIANCES = (
+    ControlApplianceType.SpaceHeater,
+    ControlApplianceType.WindowAC,
+    ControlApplianceType.WindowHeatpump,
+)
 
 SWITCH_APPLIANCE_TYPES = [
     ControlApplianceType.BoilerZoneCall,

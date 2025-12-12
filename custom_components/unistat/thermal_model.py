@@ -3,10 +3,9 @@ import numpy.typing as npt
 import logging
 
 from typing import Any
-from collections import defaultdict
 from functools import cached_property
 
-from .const import CONF_AREAS, ControlApplianceType
+
 from .model_params import UniStatModelParams
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,7 +21,7 @@ class UniStatSystemModel:
         self._model_params = model_params
         if not self._model_params:
             _LOGGER.info("No model_params provided initializing from scratch")
-            self._initialize_model_params(config_data=config_data)
+            self._model_params = UniStatModelParams.from_conf(config_data)
 
         # Munge model parameters into the right type if they are not.
         if isinstance(self._model_params, dict):
@@ -39,87 +38,12 @@ class UniStatSystemModel:
             _LOGGER.warning(
                 "Mismatch between current config and config in model_params, reinitializing."
             )
-            self._initialize_state(config_data=config_data)
+            self._model_params = UniStatModelParams.from_conf(config_data)
 
         # self._ss_model = control.ss(self.A, self.B, self.C, self.D)
 
     def simulate(self, states, controls) -> tuple[npt.NDArray, npt.NDArray]:
         raise NotImplementedError
-
-    def _sort_appliances_by_type(
-        self, config_data
-    ) -> dict[ControlApplianceType, dict[str, Any]]:
-        """Returns a dict of dicts keyed by ControlApplianceType then control_eid"""
-        out = defaultdict(dict)
-        # for c in config_data[CONF_CONTROLS]:
-        #     control_app = config_data["control_appliances"][c]
-        #     app_type = control_app[CONF_APPLIANCE_TYPE]
-        #     out[app_type][c] = control_app
-        return dict(out)
-
-    def _initialize_model_params(
-        self,
-        config_data,
-        estimate_internal_loads: bool = False,
-    ) -> UniStatModelParams:
-        """Generates a UniStatModelParams with default values based"""
-
-        # CONSTANTS
-        HEAT_CAPACITY_OF_WATER = 4.186  # kJ/(kg*K)
-        UNINSULATED_U_FACTOR = 1.658  # W/(K m^2)
-        THREE_WYTHE_BRICK_WALL = 7.381  # W/(k m^2)
-
-        DEFAULT_THERMAL_MASS = 1000  # TODO Put in reasonable value
-        DEFAULT_BOILER_MASS = (
-            190 * HEAT_CAPACITY_OF_WATER
-        )  # This is 190L or 50gal of water
-        DEFAULT_RESISTANCE_OUTSIDE = (
-            10 * THREE_WYTHE_BRICK_WALL / 1000
-        )  # ~10sq meter 3 course brick wall
-        DEFAULT_RESISTANCE_INSIDE = (
-            10 * UNINSULATED_U_FACTOR / 1000
-        )  # ~10sq meter separating drywall with no insulation
-        DEFAULT_RADIATOR_CONSTANT = 0.03
-        DEFAULT_THERMAL_LAG = 3600 * 6  # 6 hours
-
-        rooms = config_data[CONF_AREAS]
-        num_rooms = len(rooms)
-        room_thermal_masses = [DEFAULT_THERMAL_MASS] * num_rooms
-
-        # apps_by_type = self._sort_appliances_by_type(config_data)
-
-        boiler_thermal_masses = [DEFAULT_BOILER_MASS]
-        radiator_rooms = []
-        radiator_constants = [DEFAULT_RADIATOR_CONSTANT] * len(radiator_rooms)
-        hvac_vent_constants = []
-
-        # TODO hvac_vent_constants
-
-        adjacency_matrix = np.array(config_data["adjacency"], dtype=bool)
-
-        outside_resistances = [DEFAULT_RESISTANCE_OUTSIDE] * np.count_nonzero(
-            adjacency_matrix[0, :]
-        )
-        inside_resistances = [DEFAULT_RESISTANCE_INSIDE] * np.count_nonzero(
-            adjacency_matrix[1:, :]
-        )
-        thermal_resistances = outside_resistances + inside_resistances
-        assert np.size(thermal_resistances) == np.count_nonzero(adjacency_matrix)
-
-        internal_loads = [0] * num_rooms if estimate_internal_loads else []
-
-        self._model_params = UniStatModelParams(
-            conf_data=dict(config_data),
-            estimate_internal_loads=estimate_internal_loads,
-            room_thermal_masses=room_thermal_masses,
-            thermal_resistances=thermal_resistances,
-            boiler_thermal_masses=boiler_thermal_masses,
-            radiator_rooms=radiator_rooms,
-            radiator_constants=radiator_constants,
-            internal_loads=internal_loads,
-            thermal_lag=DEFAULT_THERMAL_LAG,
-            hvac_vent_constants=hvac_vent_constants,
-        )
 
     @property
     def model_params(self):

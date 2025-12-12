@@ -40,6 +40,9 @@ from custom_components.unistat.const import (
     CONF_APPLIANCE_METER,
     CONF_EFFICIENCY,
     CONF_APPLIANCE_TYPE,
+    CONF_ROOM_SETTINGS,
+    CONF_CENTRAL_APPLIANCES,
+    CONF_CONTROL_APPLIANCES,
     ControlApplianceType,
     CentralApplianceType,
     ControlMode,
@@ -59,17 +62,15 @@ class ConfigParams(NamedTuple):
 # Helpers
 def make_expected(config: ConfigParams):
     expected = config.main_conf.copy()
-    expected["room_sensors"] = config.room_sensors.copy()
-    expected["control_appliances"] = config.control_appliances.copy()
-    expected["central_appliances"] = {}
-    for app in config.central_appliances:
-        app_name = app[1][CONF_NAME]
-        app_data = app[1].copy()
-        app_data[CONF_APPLIANCE_TYPE] = app[0]
-        expected["central_appliances"][app_name] = app_data
+    expected[CONF_ROOM_SETTINGS] = config.room_sensors.copy()
+    expected[CONF_CONTROL_APPLIANCES] = config.control_appliances.copy()
+    expected[CONF_CENTRAL_APPLIANCES] = [
+        {**app, CONF_APPLIANCE_TYPE: app_type}
+        for app_type, app in config.central_appliances
+    ]
 
     central_counter = 0
-    for app in expected["control_appliances"]:
+    for app in expected[CONF_CONTROL_APPLIANCES]:
         if CONF_CENTRAL_APPLIANCE in app and app[CONF_CENTRAL_APPLIANCE] == "New":
             app[CONF_CENTRAL_APPLIANCE] = config.central_appliances[central_counter][1][
                 "name"
@@ -171,9 +172,6 @@ def _make_peripheral(
 
 
 make_zonevalve = partial(_make_peripheral, app_type=ControlApplianceType.BoilerZoneCall)
-make_trv = partial(
-    _make_peripheral, app_type=ControlApplianceType.ThermoStaticRadiatorValve
-)
 make_hvac_climate = partial(
     _make_peripheral, app_type=ControlApplianceType.HVACThermostat
 )
