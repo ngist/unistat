@@ -120,6 +120,7 @@ class UniStatModelParams:
 
         boiler_thermal_masses = []
         radiator_constants = []
+        radiator_rooms = []
         central_appliances = UniStatModelParams._central_appliances(config_data)
         for ca in central_appliances:
             if ca[CONF_APPLIANCE_TYPE] == CentralApplianceType.HydroBoiler:
@@ -128,6 +129,10 @@ class UniStatModelParams:
                 radiator_constants.append(
                     [DEFAULT_RADIATOR_CONSTANT] * ca["num_fixtures"]
                 )
+                radiator_rooms.append([])
+                for z in ca["zone_map"]:
+                    radiator_rooms[-1] = radiator_rooms[-1] + z
+                radiator_rooms[-1] = radiator_rooms[-1] + ca["common_rooms"]
 
         hvac_vent_constants = []
         hvac_system = UniStatModelParams._coalesce_hvac(config_data, central_appliances)
@@ -147,10 +152,6 @@ class UniStatModelParams:
 
         internal_loads = [0] * num_rooms if estimate_internal_loads else []
 
-        boiler_thermal_masses = []
-        radiator_rooms = []
-        radiator_constants = []
-        hvac_vent_constants = []
         return UniStatModelParams(
             conf_data=dict(config_data),
             estimate_internal_loads=estimate_internal_loads,
@@ -279,7 +280,9 @@ class UniStatModelParams:
         # Compute number of logical radiators or vents tied to this appliance
         # NOTE this need not be equal to the physical number of radiators, for instance if there
         # are two radiators in a room on the same zone that can't be controlled independently then it can be modeled as one radiator.
-        num_fixtures = np.sum([len(z) for z in zone_specific_rooms]) + len(common_rooms)
+        num_fixtures = int(
+            np.sum([len(z) for z in zone_specific_rooms]) + len(common_rooms)
+        )
 
         # Check if rooms other than the common rooms are on more than one zone
         for i, r in enumerate(zone_specific_rooms):
@@ -301,8 +304,8 @@ class UniStatModelParams:
             "num_zones": len(appliance[CONF_CONTROLS]),
             "num_fixtures": num_fixtures,
             "has_common_rooms": len(common_rooms) > 0,
-            "common_rooms": common_rooms,
-            "zone_map": rooms,
+            "common_rooms": list(common_rooms),
+            "zone_map": [list(r) for r in rooms],
         }
 
     @staticmethod

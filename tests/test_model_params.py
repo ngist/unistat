@@ -232,8 +232,23 @@ class TestUniStatModelParams_OffNominal:
 class TestUniStatModelParams_from_conf:
     def test_has_boiler(self):
         model_params = UniStatModelParams.from_conf(conf_with_boiler())
-
+        assert model_params.in_bounds
+        assert model_params.valid_adjacency
+        assert model_params.self_consistent
+        assert isinstance(model_params.central_appliances[0]["num_fixtures"], int)
+        assert isinstance(model_params.central_appliances[0]["num_zones"], int)
+        assert isinstance(model_params.central_appliances[0]["has_common_rooms"], bool)
+        assert isinstance(model_params.central_appliances[0]["efficiency"], float)
+        assert isinstance(model_params.central_appliances[0]["heating_power"], float)
+        assert isinstance(model_params.central_appliances[0]["zone_map"], list)
+        assert isinstance(model_params.central_appliances[0]["zone_map"][0], list)
+        assert isinstance(model_params.central_appliances[0]["common_rooms"], list)
+        assert model_params.num_rooms == 3
         assert model_params.standalone_appliances == {}
+        assert model_params.has_boiler
+        assert len(model_params.boiler_thermal_masses[0]) == 2
+        assert len(model_params.radiator_constants[0]) == 2
+        assert model_params.radiator_rooms[0] == ["kitchen", "bedroom"]
         assert model_params.central_appliances == [
             {
                 "name": "boiler",
@@ -258,13 +273,18 @@ class TestUniStatModelParams_from_conf:
                 "num_zones": 2,
                 "num_fixtures": 2,
                 "has_common_rooms": False,
-                "common_rooms": set(),
-                "zone_map": [{"kitchen"}, {"bedroom"}],
+                "common_rooms": [],
+                "zone_map": [["kitchen"], ["bedroom"]],
             }
         ]
 
     def test_standalone_only(self):
         model_params = UniStatModelParams.from_conf(conf_simple())
+        assert model_params.in_bounds
+        assert model_params.valid_adjacency
+        assert model_params.self_consistent
+        assert not model_params.has_boiler
+        assert model_params.num_rooms == 3
         assert model_params.central_appliances == []
         assert model_params.standalone_appliances == {
             ControlApplianceType.SpaceHeater: [
