@@ -1,8 +1,9 @@
 import pytest
 import numpy as np
 
+from custom_components.unistat.const import ControlApplianceType, CentralApplianceType
 from custom_components.unistat.model_params import UniStatModelParams
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, UnitOfPower
 
 
 from .config_gen import (
@@ -226,3 +227,41 @@ class TestUniStatModelParams_OffNominal:
         initial = MODEL_PARAMS_FULL.to_vector()
         with pytest.raises(ValueError):
             MODEL_PARAMS_FULL.from_vector(initial[1:])
+
+
+class TestUniStatModelParams_from_conf:
+    def test_has_boiler(self):
+        model_params = UniStatModelParams.from_conf(conf_with_boiler())
+
+        assert model_params.standalone_appliances == {}
+        assert model_params.central_appliances == [
+            {
+                "name": "boiler",
+                "heating_power": 41029.949799999995,
+                "unit_of_measurement": UnitOfPower.WATT,
+                "efficiency": 80.0,
+                "appliance_type": CentralApplianceType.HydroBoiler,
+                "climate_controls": [
+                    {
+                        "appliance_type": ControlApplianceType.BoilerZoneCall,
+                        "areas": ["kitchen"],
+                        "central_appliance": "boiler",
+                        "climate_controls": "switch.zone1_valve",
+                    },
+                    {
+                        "appliance_type": ControlApplianceType.BoilerZoneCall,
+                        "areas": ["bedroom"],
+                        "central_appliance": "boiler",
+                        "climate_controls": "switch.zone2_valve",
+                    },
+                ],
+                "num_zones": 2,
+                "num_fixtures": 2,
+                "has_common_rooms": False,
+                "common_rooms": set(),
+                "zone_map": [{"kitchen"}, {"bedroom"}],
+            }
+        ]
+        assert False
+        print(model_params.central_appliances)
+        print(model_params.standalone_appliances)

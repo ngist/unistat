@@ -165,17 +165,11 @@ class UniStatModelParams:
         )
 
     @cached_property
-    def standalone_appliances(self):
-        return self._sort_standalones_by_type(self.conf_data)
-
-    @staticmethod
-    def _sort_standalones_by_type(
-        config_data,
-    ) -> dict[ControlApplianceType, dict[str, Any]]:
+    def standalone_appliances(self) -> dict[ControlApplianceType, dict[str, Any]]:
         """Returns a dict of dicts keyed by ControlApplianceType then control_eid"""
         out = defaultdict(list)
         for c, app in zip(
-            config_data[CONF_CONTROLS], config_data[CONF_CONTROL_APPLIANCES]
+            self.conf_data[CONF_CONTROLS], self.conf_data[CONF_CONTROL_APPLIANCES]
         ):
             if CONF_CENTRAL_APPLIANCE not in app:
                 app_type = app[CONF_APPLIANCE_TYPE]
@@ -291,7 +285,9 @@ class UniStatModelParams:
         for i, r in enumerate(zone_specific_rooms):
             for j, r in enumerate(zone_specific_rooms):
                 if i != j:
-                    overlaping_rooms = zone_specific_rooms[i] & zone_specific_rooms[j]
+                    overlaping_rooms = set(zone_specific_rooms[i]) & set(
+                        zone_specific_rooms[j]
+                    )
                     if overlaping_rooms:
                         _LOGGER.info(
                             "%s has zones %s and %s with non-common overlapping rooms. This is probably not correct",
@@ -300,7 +296,7 @@ class UniStatModelParams:
                             appliance[CONF_CONTROLS][j][CONF_CONTROLS],
                         )
 
-        appliance = {
+        return {
             **appliance,
             "num_zones": len(appliance[CONF_CONTROLS]),
             "num_fixtures": num_fixtures,
@@ -315,22 +311,21 @@ class UniStatModelParams:
 
     @staticmethod
     def _standardize_power(appliance: dict) -> dict:
+        update_vals = {}
         if CONF_HEATING_POWER in appliance:
-            appliance.update(
-                PowerConverter.convert(
-                    appliance[CONF_HEATING_POWER],
-                    appliance[CONF_UNIT_OF_MEASUREMENT],
-                    UnitOfPower.WATT,
-                )
+            update_vals[CONF_HEATING_POWER] = PowerConverter.convert(
+                appliance[CONF_HEATING_POWER],
+                appliance[CONF_UNIT_OF_MEASUREMENT],
+                UnitOfPower.WATT,
             )
+            update_vals[CONF_UNIT_OF_MEASUREMENT] = UnitOfPower.WATT
         if CONF_COOLING_POWER in appliance:
-            appliance.update(
-                PowerConverter.convert(
-                    appliance[CONF_COOLING_POWER],
-                    appliance[CONF_UNIT_OF_MEASUREMENT],
-                    UnitOfPower.WATT,
-                )
+            update_vals[CONF_COOLING_POWER] = PowerConverter.convert(
+                appliance[CONF_COOLING_POWER],
+                appliance[CONF_UNIT_OF_MEASUREMENT],
+                UnitOfPower.WATT,
             )
+        appliance.update(update_vals)
 
     @staticmethod
     def _coalesce_hvac(config_data, central_appliances) -> list:
