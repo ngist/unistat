@@ -23,7 +23,7 @@ def conf_simple():
     params = ConfigParams(
         main_conf=make_main_conf(rooms, controls),
         room_sensors=make_multiroom_sensors(rooms),
-        control_appliances=[make_spaceheater([rooms[i]]) for i in range(len(controls))],
+        control_appliances=[make_spaceheater(rooms[i]) for i in range(len(controls))],
     )
     return make_expected(params)
 
@@ -262,3 +262,45 @@ class TestUniStatModelParams_from_conf:
                 "zone_map": [{"kitchen"}, {"bedroom"}],
             }
         ]
+
+    def test_standalone_only(self):
+        model_params = UniStatModelParams.from_conf(conf_simple())
+        assert model_params.central_appliances == []
+        assert model_params.standalone_appliances == {
+            ControlApplianceType.SpaceHeater: [
+                {
+                    "appliance_type": ControlApplianceType.SpaceHeater,
+                    "areas": ["kitchen"],
+                    "heating_power": 1000.0,
+                    "unit_of_measurement": UnitOfPower.WATT,
+                    "climate_controls": "switch.spaceheater1",
+                },
+                {
+                    "appliance_type": ControlApplianceType.SpaceHeater,
+                    "areas": ["bedroom"],
+                    "heating_power": 1000.0,
+                    "unit_of_measurement": UnitOfPower.WATT,
+                    "climate_controls": "switch.spaceheater2",
+                },
+            ]
+        }
+
+    @pytest.mark.skip
+    def test_overlapping_boiler_zones(self):
+        # TODO implement test
+        assert False
+
+    @pytest.mark.skip
+    def test_hvac_setup(self):
+        # TODO implement test
+        assert False
+
+    @pytest.mark.skip
+    def test_mini_split_setup(self):
+        # TODO implement test
+        assert False
+
+    @pytest.mark.skip
+    def test_my_house(self):
+        # TODO implement test
+        assert False
