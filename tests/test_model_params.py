@@ -262,6 +262,3 @@ class TestUniStatModelParams_from_conf:
                 "zone_map": [{"kitchen"}, {"bedroom"}],
             }
         ]
-        assert False
-        print(model_params.central_appliances)
-        print(model_params.standalone_appliances)

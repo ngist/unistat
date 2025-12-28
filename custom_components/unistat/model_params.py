@@ -269,7 +269,7 @@ class UniStatModelParams:
         rooms = [set(app[CONF_AREAS]) for app in appliance[CONF_CONTROLS]]
 
         # First find rooms that are heated on any zone call. These are called common rooms
-        common_rooms = rooms[0]
+        common_rooms = set(rooms[0])
         for r in rooms:
             common_rooms &= r
 
